@@ -1,0 +1,6 @@
+# data files
+data/VCTK-corpus/wav16_silence_trimmed_padded/
+data/VCTK-corpus/hubert100/
+
+# python temp files
+__pycache__/
