@@ -4,3 +4,4 @@ data/VCTK-corpus/hubert100/
 
 # python temp files
 __pycache__/
+.idea/
