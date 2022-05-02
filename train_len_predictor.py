@@ -5,16 +5,17 @@ from dataset.utils import get_spkrs_dict
 from dataset.len_dataset import LenDataset
 from model.len_predictor import LenPredictor
 from loss.len_loss import LenLoss
+from utils import seed_everything
 
 
 def train(data_path: str, device: str = 'cuda:0') -> None:
     spk_id_dict = get_spkrs_dict(f'{data_path}/train.txt')
 
     ds_train = LenDataset(f'{data_path}/train.txt', spk_id_dict)
-    dl_train = DataLoader(ds_train, batch_size=32, shuffle=True)
+    dl_train = DataLoader(ds_train, batch_size=32, num_workers=0, shuffle=True)
 
     ds_val = LenDataset(f'{data_path}/val.txt', spk_id_dict)
-    dl_val = DataLoader(ds_val, batch_size=32, shuffle=False)
+    dl_val = DataLoader(ds_val, batch_size=32, num_workers=0, shuffle=False)
 
     model = LenPredictor()
     model.to(device)
@@ -62,4 +63,8 @@ def train(data_path: str, device: str = 'cuda:0') -> None:
 if __name__ == '__main__':
     data_path = 'data/VCTK-corpus/hubert100'
     device = 'cuda:0'
+    seed = 42
+
+    if seed is not None:
+        seed_everything(seed)
     train(data_path, device)

@@ -1,3 +1,5 @@
+import pickle
+
 import torch
 from torch.utils.data import DataLoader
 
@@ -5,9 +7,13 @@ from dataset.utils import get_spkrs_dict
 from dataset.pitch_dataset import PitchDataset
 from model.pitch_predictor import PitchPredictor
 from loss.pitch_loss import PitchLoss, PitchRegLoss
+from utils import seed_everything
+
 
 def train(data_path: str, f0_path: str, device: str = 'cuda:0'):
-    f0_param_dict = torch.load(f0_path)
+    # f0_param_dict = torch.load(f0_path)
+    with open(f0_path, 'rb') as f:
+        f0_param_dict = pickle.load(f)
     spk_id_dict = get_spkrs_dict(f'{data_path}/train.txt')
 
     ds_train = PitchDataset(f'{data_path}/train.txt', spk_id_dict, f0_param_dict, nbins=50)
@@ -68,6 +74,10 @@ def train(data_path: str, f0_path: str, device: str = 'cuda:0'):
 
 if __name__ == '__main__':
     data_path = 'data/VCTK-corpus/hubert100'
-    f0_path = 'data/VCTK-corpus/hubert100/f0_stats.th'
+    f0_path = 'data/VCTK-corpus/hubert100/f0_stats.pkl'
     device = 'cuda:0'
+    seed = 42
+
+    if seed is not None:
+        seed_everything(seed)
     train(data_path, f0_path, device)

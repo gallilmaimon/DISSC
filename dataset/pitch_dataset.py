@@ -24,10 +24,10 @@ class PitchDataset(Dataset):
         with open(path, 'r') as f:
             for line in f.readlines():
                 val_dict = eval(line)
-                spk_id = self.spk_id_dict[val_dict['audio'].split('_')[0]]
+                name = val_dict['audio'].split('_')[0]
                 seqs.append(torch.IntTensor(val_dict['units']))
-                fs.append((torch.FloatTensor(val_dict['f0']) - self.f0_param_dict[spk_id]['f0_mean']) / self.f0_param_dict[spk_id]['f0_std'])
-                spk_ids.append(torch.IntTensor([spk_id]))
+                fs.append((torch.FloatTensor(val_dict['f0']) - self.f0_param_dict[name]['mean']) / self.f0_param_dict[name]['std'])
+                spk_ids.append(torch.IntTensor([self.spk_id_dict[name]]))
         return pad_sequence(seqs, batch_first=True, padding_value=100), pad_sequence(fs, batch_first=True,
                                                                                      padding_value=100), torch.concat(
             spk_ids).view(-1, 1)
