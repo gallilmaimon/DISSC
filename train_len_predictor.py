@@ -9,20 +9,21 @@ from loss.len_loss import LenLoss
 from utils import seed_everything
 
 
-def train(data_path: str, device: str = 'cuda:0') -> None:
+def train(data_path: str, device: str = 'cuda:0', args=None) -> None:
+    _padding_value = -1
     spk_id_dict = get_spkrs_dict(f'{data_path}/train.txt')
 
-    ds_train = LenDataset(f'{data_path}/train.txt', spk_id_dict)
+    ds_train = LenDataset(f'{data_path}/train.txt', spk_id_dict, args.n_tokens, _padding_value)
     dl_train = DataLoader(ds_train, batch_size=args.batch_size, shuffle=True)
 
-    ds_val = LenDataset(f'{data_path}/val.txt', spk_id_dict)
+    ds_val = LenDataset(f'{data_path}/val.txt', spk_id_dict, args.n_tokens, _padding_value)
     dl_val = DataLoader(ds_val, batch_size=args.batch_size, shuffle=False)
 
-    model = LenPredictor()
+    model = LenPredictor(n_tokens=args.n_tokens, n_speakers=len(spk_id_dict))
     model.to(device)
 
     opt = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
-    len_loss = LenLoss()
+    len_loss = LenLoss(pad_idx=_padding_value)
 
     for epoch in range(args.n_epochs):
         print(f'\nEpoch: {epoch}')
@@ -70,9 +71,10 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', default=32, help='batch size for train and inference')
     parser.add_argument('--learning_rate', default=3e-4, help='initial learning rate of the Adam optimiser')
     parser.add_argument('--n_epochs', default=100, help='number of training epochs')
+    parser.add_argument('--n_tokens', default=100, help='number of unique HuBERT tokens to use (which represent how many clusters were used)')
     parser.add_argument('--n_bins', default=50, help='number of uniform bins for splitting the normalised frequencies')
 
     args = parser.parse_args()
 
     seed_everything(args.seed)
-    train(args.data_path, args.device)
+    train(args.data_path, args.device, args)

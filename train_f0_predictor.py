@@ -11,23 +11,26 @@ from utils import seed_everything
 
 
 def train(data_path: str, f0_path: str, device: str = 'cuda:0', args: argparse = None):
+    _padding_value = -100  # this needs to be not likely to be encountered as label (which is whitened), and not as prob (0-1)
     with open(f0_path, 'rb') as f:
         f0_param_dict = pickle.load(f)
     spk_id_dict = get_spkrs_dict(f'{data_path}/train.txt')
 
-    ds_train = PitchDataset(f'{data_path}/train.txt', spk_id_dict, f0_param_dict, nbins=args.n_bins)
+    ds_train = PitchDataset(f'{data_path}/train.txt', spk_id_dict, f0_param_dict, n_bins=args.n_bins,
+                            n_tokens=args.n_tokens, padding_value=_padding_value)
     dl_train = DataLoader(ds_train, batch_size=args.batch_size, shuffle=True)
 
-    ds_val = PitchDataset(f'{data_path}/val.txt', spk_id_dict, f0_param_dict, nbins=ds_train.nbins,
-                          f_min=ds_train.f_min, scale=ds_train.scale)
+    ds_val = PitchDataset(f'{data_path}/val.txt', spk_id_dict, f0_param_dict, n_bins=ds_train.n_bins,
+                          f_min=ds_train.f_min, scale=ds_train.scale, n_tokens=args.n_tokens,
+                          padding_value=_padding_value)
     dl_val = DataLoader(ds_val, batch_size=args.batch_size, shuffle=True)
 
-    model = PitchPredictor(nbins=args.n_bins)
+    model = PitchPredictor(args.n_tokens, len(spk_id_dict), nbins=args.n_bins)
     model.to(device)
 
     opt = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
-    pitch_loss = PitchLoss(ds_train.f_min, ds_train.scale, ds_train.nbins)
-    reg_loss = PitchRegLoss()
+    pitch_loss = PitchLoss(ds_train.f_min, ds_train.scale, ds_train.n_bins, pad_idx=_padding_value)
+    reg_loss = PitchRegLoss(pad_idx=_padding_value)
 
     for epoch in range(args.n_epochs):
         print(f'\nEpoch: {epoch}')
@@ -81,6 +84,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', default=32, help='batch size for train and inference')
     parser.add_argument('--learning_rate', default=3e-4, help='initial learning rate of the Adam optimiser')
     parser.add_argument('--n_epochs', default=100, help='number of training epochs')
+    parser.add_argument('--n_tokens', default=100, help='number of unique HuBERT tokens to use (which represent how many clusters were used)')
     parser.add_argument('--n_bins', default=50, help='number of uniform bins for splitting the normalised frequencies')
 
     args = parser.parse_args()

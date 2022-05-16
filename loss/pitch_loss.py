@@ -16,7 +16,7 @@ class PitchLoss(nn.Module):
 
     def forward(self, preds, gt):
         # transforming labels to blurred one-hot is done in loss for memory efficiency reasons
-        gt, _, _ = prepare_f0(gt, self.nbins, self.f_min, self.scale)
+        gt, _, _ = prepare_f0(gt, self.nbins, self.f_min, self.scale, self.pad_idx)
         mask = (gt != self.pad_idx)
         total_loss = self.bce(preds, gt)
         return (mask * total_loss).sum() / mask.sum()
@@ -43,11 +43,11 @@ def quantise_f0(fs, nbins=50, f_min=None, scale=None):
     return nn.functional.one_hot(q_fs, num_classes=nbins), f_min, scale
 
 
-def prepare_f0(fs, nbins=50, f_min=None, scale=None):
+def prepare_f0(fs, nbins=50, f_min=None, scale=None, pad_idx=-100):
     res = torch.zeros((fs.shape[0], fs.shape[1], nbins)).long().to(fs.device)
-    res[fs != 100], fmin, scale = quantise_f0(fs[fs != 100], nbins, f_min, scale)
+    res[fs != pad_idx], fmin, scale = quantise_f0(fs[fs != pad_idx], nbins, f_min, scale)
 
     filt = GaussianBlur(kernel_size=(5, 1), sigma=0.5)
     res = filt(res.float())
-    res[fs == 100] = -1
+    res[fs == pad_idx] = pad_idx
     return res, fmin, scale

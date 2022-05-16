@@ -3,11 +3,11 @@ from torch import nn
 
 
 class LenPredictor(nn.Module):
-    def __init__(self, token_dict_size=100, spk_dict_size=199, emb_size=32):
+    def __init__(self, n_tokens=100, n_speakers=199, emb_size=32):
         super(LenPredictor, self).__init__()
 
-        self.token_emb = nn.Embedding(token_dict_size + 1, emb_size, padding_idx=token_dict_size)
-        self.spk_emb = nn.Embedding(spk_dict_size + 1, emb_size, padding_idx=spk_dict_size)
+        self.token_emb = nn.Embedding(n_tokens + 1, emb_size, padding_idx=n_tokens)
+        self.spk_emb = nn.Embedding(n_speakers, emb_size)
         self.leaky = nn.LeakyReLU()
         self.dropout = nn.Dropout(p=0.5)
 

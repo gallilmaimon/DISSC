@@ -2,11 +2,11 @@ import torch
 from torch import nn
 
 class PitchPredictor(nn.Module):
-    def __init__(self, token_dict_size=100, spk_dict_size=199, emb_size=32, nbins=50):
+    def __init__(self, n_tokens=100, n_speakers=199, emb_size=32, nbins=50):
         super(PitchPredictor, self).__init__()
         self.nbins = nbins
-        self.token_emb = nn.Embedding(token_dict_size + 1, emb_size, padding_idx=token_dict_size)
-        self.spk_emb = nn.Embedding(spk_dict_size + 1, emb_size, padding_idx=spk_dict_size)
+        self.token_emb = nn.Embedding(n_tokens + 1, emb_size, padding_idx=n_tokens)
+        self.spk_emb = nn.Embedding(n_speakers + 1, emb_size, padding_idx=n_speakers)
         self.leaky = nn.LeakyReLU()
         self.dropout = nn.Dropout(p=0.0)
 
@@ -31,10 +31,12 @@ class PitchPredictor(nn.Module):
 
     def infer_norm_freq(self, seq, spk_id, fmin, scale):
         preds = torch.sigmoid(self(seq, spk_id).transpose(1, 2))  # calculate class probs
+        # Uses middle value for bin representative
         f_weights = torch.linspace(fmin + 0.5 * scale, fmin + (self.nbins - 0.5) * scale, self.nbins, device=preds.device)
         return torch.inner(preds, f_weights)
 
     def calc_norm_freq(self, preds, fmin, scale):
         preds = torch.sigmoid(preds.transpose(1, 2))  # calculate class probs
+        # Uses middle value for bin representative
         f_weights = torch.linspace(fmin + 0.5 * scale, fmin + (self.nbins - 0.5) * scale, self.nbins, device=preds.device)
         return torch.inner(preds, f_weights)
