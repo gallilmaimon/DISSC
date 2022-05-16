@@ -1,3 +1,4 @@
+import argparse
 import torch
 from torch.utils.data import DataLoader
 
@@ -12,18 +13,18 @@ def train(data_path: str, device: str = 'cuda:0') -> None:
     spk_id_dict = get_spkrs_dict(f'{data_path}/train.txt')
 
     ds_train = LenDataset(f'{data_path}/train.txt', spk_id_dict)
-    dl_train = DataLoader(ds_train, batch_size=32, num_workers=0, shuffle=True)
+    dl_train = DataLoader(ds_train, batch_size=args.batch_size, shuffle=True)
 
     ds_val = LenDataset(f'{data_path}/val.txt', spk_id_dict)
-    dl_val = DataLoader(ds_val, batch_size=32, num_workers=0, shuffle=False)
+    dl_val = DataLoader(ds_val, batch_size=args.batch_size, shuffle=False)
 
     model = LenPredictor()
     model.to(device)
 
-    opt = torch.optim.Adam(model.parameters(), lr=3e-4)
+    opt = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
     len_loss = LenLoss()
 
-    for epoch in range(100):
+    for epoch in range(args.n_epochs):
         print(f'\nEpoch: {epoch}')
 
         model.train()
@@ -61,10 +62,17 @@ def train(data_path: str, device: str = 'cuda:0') -> None:
 
 
 if __name__ == '__main__':
-    data_path = 'data/VCTK-corpus/hubert100'
-    device = 'cuda:0'
-    seed = 42
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--mode', default='train', help='Whether to train or inference in [\'train\']')
+    parser.add_argument('--data_path', default='data/VCTK-corpus/hubert100', help='Path to sequence data')
+    parser.add_argument('--device', default='cuda:0', help='Device to run on')
+    parser.add_argument('--seed', default=42, help='random seed, use -1 for non-determinism')
+    parser.add_argument('--batch_size', default=32, help='batch size for train and inference')
+    parser.add_argument('--learning_rate', default=3e-4, help='initial learning rate of the Adam optimiser')
+    parser.add_argument('--n_epochs', default=100, help='number of training epochs')
+    parser.add_argument('--n_bins', default=50, help='number of uniform bins for splitting the normalised frequencies')
 
-    if seed is not None:
-        seed_everything(seed)
-    train(data_path, device)
+    args = parser.parse_args()
+
+    seed_everything(args.seed)
+    train(args.data_path, args.device)
