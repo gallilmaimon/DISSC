@@ -2,6 +2,9 @@
 data/VCTK-corpus/wav16_silence_trimmed_padded/
 data/VCTK-corpus/hubert100/
 
+# output files, such as logs and checkpoints
+results/
+
 # python temp files
 __pycache__/
 .idea/
