@@ -4,7 +4,7 @@ import argparse
 import torch
 from torch.utils.data import DataLoader
 
-from dataset.utils import get_spkrs_dict
+from dataset.utils import get_spkrs_dict, prep_stats_tensors
 from dataset.pitch_dataset import PitchDataset
 from model.pitch_predictor import PitchPredictor
 from loss.pitch_loss import PitchLoss, PitchRegLoss
@@ -21,6 +21,8 @@ def train(data_path: str, f0_path: str, device: str = 'cuda:0', args: argparse =
         f0_param_dict = pickle.load(f)
     spk_id_dict = get_spkrs_dict(f'{data_path}/train.txt')
 
+    id2pitch_mean, id2pitch_std = prep_stats_tensors(spk_id_dict, f0_param_dict)
+
     ds_train = PitchDataset(f'{data_path}/train.txt', spk_id_dict, f0_param_dict, n_bins=args.n_bins,
                             n_tokens=args.n_tokens, padding_value=_padding_value)
     dl_train = DataLoader(ds_train, batch_size=args.batch_size, shuffle=True)
@@ -30,12 +32,13 @@ def train(data_path: str, f0_path: str, device: str = 'cuda:0', args: argparse =
                           padding_value=_padding_value)
     dl_val = DataLoader(ds_val, batch_size=args.batch_size, shuffle=True)
 
-    model = PitchPredictor(args.n_tokens, len(spk_id_dict), nbins=args.n_bins)
+    model = PitchPredictor(args.n_tokens, len(spk_id_dict), nbins=args.n_bins,
+                           id2pitch_mean=id2pitch_mean.to(args.device), id2pitch_std=id2pitch_std.to(args.device))
     model.to(device)
 
     opt = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
     pitch_loss = PitchLoss(ds_train.f_min, ds_train.scale, ds_train.n_bins, pad_idx=_padding_value)
-    reg_loss = PitchRegLoss(pad_idx=_padding_value)
+    reg_metric = PitchRegLoss(id2pitch_std.to(args.device), pad_idx=_padding_value)
 
     best_mse = torch.inf
     for epoch in range(args.n_epochs):
@@ -57,8 +60,8 @@ def train(data_path: str, f0_path: str, device: str = 'cuda:0', args: argparse =
             opt.step()
             total_train_loss += loss
             with torch.no_grad():
-                total_train_mse += reg_loss(model.calc_norm_freq(preds, ds_train.f_min, ds_train.scale), gts_reg)
-
+                total_train_mse += reg_metric(model.calc_norm_freq(preds, ds_train.f_min, ds_train.scale), gts_reg,
+                                              spk_id)
             print(f'\r finished: {100 * i / len(dl_train):.2f}%, train loss: {loss:.5f}', end='')
         print()  # used to account for \r
 
@@ -75,7 +78,8 @@ def train(data_path: str, f0_path: str, device: str = 'cuda:0', args: argparse =
                 preds = model(seqs, spk_id)
                 loss = pitch_loss(preds.transpose(1, 2), gts_reg)
             total_val_loss += loss
-            total_val_mse += reg_loss(model.calc_norm_freq(preds, ds_val.f_min, ds_val.scale), gts_reg)
+            total_val_mse += reg_metric(model.calc_norm_freq(preds, ds_val.f_min, ds_val.scale), gts_reg, spk_id)
+
 
         # save best model
         if total_val_mse < best_mse:
@@ -91,7 +95,7 @@ def train(data_path: str, f0_path: str, device: str = 'cuda:0', args: argparse =
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', default='train', help='Whether to train or inference in [\'train\']')
-    parser.add_argument('--out_path', default='results/debug', help='Path to save model and logs')
+    parser.add_argument('--out_path', default='results/debug2', help='Path to save model and logs')
     parser.add_argument('--data_path', default='data/VCTK-corpus/hubert100', help='Path to sequence data')
     parser.add_argument('--f0_path', default='data/VCTK-corpus/hubert100/f0_stats.pkl', help='Pitch normalisation stats pickle')
     parser.add_argument('--device', default='cuda:0', help='Device to run on')
