@@ -37,6 +37,8 @@ def train(data_path: str, device: str = 'cuda:0', args=None) -> None:
 
         model.train()
         total_train_loss = 0
+        num_train_loss_samples = 0  # calculates the total number of samples which aren't padding in order to normalise loss
+
         for i, batch in enumerate(dl_train):
             seqs, lens, spk_id = batch
             seqs = seqs.to(device)
@@ -48,14 +50,18 @@ def train(data_path: str, device: str = 'cuda:0', args=None) -> None:
             loss = len_loss(preds, lens)
             loss.backward()
             opt.step()
-            total_train_loss += loss
 
-            print(f'\r finished: {100 * i / len(dl_train):.2f}%, train loss: {loss:.5f}', end='')
+            total_train_loss += loss
+            cur_n_samples = (seqs != _padding_value).sum()
+            num_train_loss_samples += cur_n_samples.detach().cpu()
+
+            print(f'\r finished: {100 * i / len(dl_train):.2f}%, train loss: {loss / cur_n_samples:.5f}', end='')
         print()  # used to account for \r
 
         # validation
         model.eval()
         total_val_loss = 0
+        num_val_loss_samples = 0  # calculates the total number of samples which aren't padding in order to normalise loss
         for i, batch in enumerate(dl_val):
             seqs, lens, spk_id = batch
             seqs = seqs.to(device)
@@ -65,27 +71,28 @@ def train(data_path: str, device: str = 'cuda:0', args=None) -> None:
                 preds = model(seqs, spk_id)
                 loss = len_loss(preds, lens)
             total_val_loss += loss
+            num_val_loss_samples += (seqs != _padding_value).sum()
 
         # save best model
         if total_val_loss < best_loss:
             torch.save(model.state_dict(), out_path + '/best_model.pth')
             best_loss = total_val_loss
 
-        log_metrics(train_logger, {"loss": total_train_loss.detach().cpu() / len(dl_train)}, epoch, 'train')
-        log_metrics(val_logger, {"loss": total_val_loss.detach().cpu() / len(dl_val)}, epoch, 'val')
+        log_metrics(train_logger, {"loss": total_train_loss.detach().cpu() / num_train_loss_samples}, epoch, 'train')
+        log_metrics(val_logger, {"loss": total_val_loss.detach().cpu() / num_val_loss_samples.detach().cpu()}, epoch, 'val')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', default='train', help='Whether to train or inference in [\'train\']')
-    parser.add_argument('--out_path', default='results/debug', help='Path to save model and logs')
+    parser.add_argument('--out_path', default='results/baseline', help='Path to save model and logs')
     parser.add_argument('--data_path', default='data/VCTK-corpus/hubert100', help='Path to sequence data')
+    parser.add_argument('--n_tokens', default=100, help='number of unique HuBERT tokens to use (which represent how many clusters were used)')
     parser.add_argument('--device', default='cuda:0', help='Device to run on')
     parser.add_argument('--seed', default=42, help='random seed, use -1 for non-determinism')
     parser.add_argument('--batch_size', default=32, help='batch size for train and inference')
     parser.add_argument('--learning_rate', default=3e-4, help='initial learning rate of the Adam optimiser')
-    parser.add_argument('--n_epochs', default=100, help='number of training epochs')
-    parser.add_argument('--n_tokens', default=100, help='number of unique HuBERT tokens to use (which represent how many clusters were used)')
+    parser.add_argument('--n_epochs', default=200, help='number of training epochs')
     parser.add_argument('--n_bins', default=50, help='number of uniform bins for splitting the normalised frequencies')
 
     args = parser.parse_args()

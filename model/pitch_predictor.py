@@ -13,7 +13,7 @@ class PitchPredictor(nn.Module):
         self.token_emb = nn.Embedding(n_tokens + 1, emb_size, padding_idx=n_tokens)
         self.spk_emb = nn.Embedding(n_speakers + 1, emb_size, padding_idx=n_speakers)
         self.leaky = nn.LeakyReLU()
-        self.dropout = nn.Dropout(p=0.5)
+        self.dropout = nn.Dropout(p=0.0)
 
         self.cnn1 = nn.Conv1d(2 * emb_size, 128, kernel_size=(3,), padding=1)
         self.bn1 = nn.BatchNorm1d(128)
@@ -32,6 +32,7 @@ class PitchPredictor(nn.Module):
         cnn1 = self.leaky(self.dropout(self.bn1(self.cnn1(emb_seq.transpose(1, 2)))))
         cnn1 = self.leaky(self.dropout(self.bn11(self.cnn11(cnn1))))
         cnn1 = self.leaky(self.dropout(self.bn12(self.cnn12(cnn1))))
+
         return self.cnn2(cnn1).squeeze(1)
 
     def infer_norm_freq(self, seq, spk_id, fmin, scale):

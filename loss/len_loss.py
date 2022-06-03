@@ -9,4 +9,4 @@ class LenLoss(nn.Module):
     def forward(self, preds, lens):
         mask = (lens != self.pad_idx)
         total_loss = self.mse(preds, lens)
-        return (mask * total_loss).sum() / mask.sum()
+        return (mask * total_loss).sum()

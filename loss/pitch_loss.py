@@ -19,7 +19,7 @@ class PitchLoss(nn.Module):
         gt, _, _ = prepare_f0(gt, self.nbins, self.f_min, self.scale, self.pad_idx)
         mask = (gt != self.pad_idx)
         total_loss = self.bce(preds, gt)
-        return (mask * total_loss).sum() / mask.sum()
+        return (mask * total_loss).sum()
 
 
 class NormPitchRegLoss(nn.Module):
@@ -31,7 +31,7 @@ class NormPitchRegLoss(nn.Module):
     def forward(self, preds, gts):
         mask = (gts != self.pad_idx)
         total_loss = self.mse(preds, gts)
-        return (mask * total_loss).sum() / mask.sum()
+        return (mask * total_loss).sum()
 
 
 class PitchRegLoss(nn.Module):
@@ -45,7 +45,7 @@ class PitchRegLoss(nn.Module):
         mask = (gts != self.pad_idx)
         total_loss = self.mse(preds, gts)
         pitch_weight = self.id2std[spk_ids.long()]
-        return (mask * total_loss * pitch_weight).sum() / mask.sum()
+        return (mask * total_loss * pitch_weight).sum()
 
 
 def quantise_f0(fs, nbins=50, f_min=None, scale=None):

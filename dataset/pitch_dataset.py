@@ -36,8 +36,9 @@ class PitchDataset(Dataset):
                pad_sequence(fs, batch_first=True, padding_value=self._pad_val), torch.concat(spk_ids).view(-1, 1)
 
     def _get_scaling(self, f_min=None, scale=None):
+        fs = self.fs[self.fs != self._pad_val]
         if f_min is None:
-            f_min = self.fs.min()
+            f_min = fs.min()
         if scale is None:
-            scale = (self.fs.max() + EPS - f_min) / self.n_bins
+            scale = (fs.max() + EPS - f_min) / self.n_bins
         return f_min, scale
