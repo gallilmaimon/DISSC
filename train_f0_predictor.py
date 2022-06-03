@@ -34,7 +34,6 @@ def train(data_path: str, f0_path: str, device: str = 'cuda:0', args: argparse =
 
     model = PitchPredictor(args.n_tokens, len(spk_id_dict), nbins=args.n_bins,
                            id2pitch_mean=id2pitch_mean.to(args.device), id2pitch_std=id2pitch_std.to(args.device))
-    model.load_state_dict(torch.load('results/baseline/pitch/best_model.pth'))
 
     model.to(device)
 
@@ -102,7 +101,7 @@ def train(data_path: str, f0_path: str, device: str = 'cuda:0', args: argparse =
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', default='train', help='Whether to train or inference in [\'train\']')
-    parser.add_argument('--out_path', default='results/train_val', help='Path to save model and logs')
+    parser.add_argument('--out_path', default='results/overfit', help='Path to save model and logs')
     parser.add_argument('--data_path', default='data/VCTK-corpus/hubert100', help='Path to sequence data')
     parser.add_argument('--n_tokens', default=100, help='number of unique HuBERT tokens to use (which represent how many clusters were used)')
     parser.add_argument('--f0_path', default='data/VCTK-corpus/hubert100/f0_stats.pkl', help='Pitch normalisation stats pickle')

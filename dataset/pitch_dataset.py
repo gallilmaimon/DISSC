@@ -26,7 +26,7 @@ class PitchDataset(Dataset):
     def _prepare_dataset(self, path):
         fs, seqs, spk_ids = [], [], []
         with open(path, 'r') as f:
-            for line in f.readlines():
+            for line in f.readlines()[:32]:
                 val_dict = eval(line)
                 name = val_dict['audio'].split('_')[0]
                 seqs.append(torch.IntTensor(val_dict['units']))
