@@ -40,7 +40,7 @@ def train(data_path: str, device: str = 'cuda:0', args=None) -> None:
         num_train_loss_samples = 0  # calculates the total number of samples which aren't padding in order to normalise loss
 
         for i, batch in enumerate(dl_train):
-            seqs, lens, spk_id = batch
+            seqs, lens, spk_id, _ = batch
             seqs = seqs.to(device)
             lens = lens.to(device)
             spk_id = spk_id.to(device)
@@ -52,7 +52,7 @@ def train(data_path: str, device: str = 'cuda:0', args=None) -> None:
             opt.step()
 
             total_train_loss += loss
-            cur_n_samples = (seqs != _padding_value).sum()
+            cur_n_samples = (seqs != args.n_tokens).sum()
             num_train_loss_samples += cur_n_samples.detach().cpu()
 
             print(f'\r finished: {100 * i / len(dl_train):.2f}%, train loss: {loss / cur_n_samples:.5f}', end='')
@@ -63,7 +63,7 @@ def train(data_path: str, device: str = 'cuda:0', args=None) -> None:
         total_val_loss = 0
         num_val_loss_samples = 0  # calculates the total number of samples which aren't padding in order to normalise loss
         for i, batch in enumerate(dl_val):
-            seqs, lens, spk_id = batch
+            seqs, lens, spk_id, _ = batch
             seqs = seqs.to(device)
             lens = lens.to(device)
             spk_id = spk_id.to(device)
@@ -71,7 +71,7 @@ def train(data_path: str, device: str = 'cuda:0', args=None) -> None:
                 preds = model(seqs, spk_id)
                 loss = len_loss(preds, lens)
             total_val_loss += loss
-            num_val_loss_samples += (seqs != _padding_value).sum()
+            num_val_loss_samples += (seqs != args.n_tokens).sum()
 
         # save best model
         if total_val_loss < best_loss:

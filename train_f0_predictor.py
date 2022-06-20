@@ -32,6 +32,9 @@ def train(data_path: str, f0_path: str, device: str = 'cuda:0', args: argparse =
                           padding_value=_padding_value)
     dl_val = DataLoader(ds_val, batch_size=args.batch_size, shuffle=False)
 
+    with open(out_path + '/f0_params.pkl', 'wb') as f:
+        pickle.dump([ds_train.n_bins, ds_train.f_min, ds_train.scale], f)
+
     model = PitchPredictor(args.n_tokens, len(spk_id_dict), nbins=args.n_bins,
                            id2pitch_mean=id2pitch_mean.to(args.device), id2pitch_std=id2pitch_std.to(args.device))
 
@@ -49,7 +52,7 @@ def train(data_path: str, f0_path: str, device: str = 'cuda:0', args: argparse =
         total_train_mse = 0
         num_train_loss_samples = 0  # calculates the total number of samples which aren't padding in order to normalise loss
         for i, batch in enumerate(dl_train):
-            seqs, gts_reg, spk_id = batch
+            seqs, gts_reg, spk_id, _ = batch
             seqs = seqs.to(device)
             gts_reg = gts_reg.to(device)
             spk_id = spk_id.to(device)
@@ -76,7 +79,7 @@ def train(data_path: str, f0_path: str, device: str = 'cuda:0', args: argparse =
         total_val_mse = 0
         num_val_loss_samples = 0  # calculates the total number of samples which aren't padding in order to normalise loss
         for i, batch in enumerate(dl_val):
-            seqs, gts_reg, spk_id = batch
+            seqs, gts_reg, spk_id, _ = batch
             seqs = seqs.to(device)
             gts_reg = gts_reg.to(device)
             spk_id = spk_id.to(device)
@@ -101,7 +104,7 @@ def train(data_path: str, f0_path: str, device: str = 'cuda:0', args: argparse =
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', default='train', help='Whether to train or inference in [\'train\']')
-    parser.add_argument('--out_path', default='results/overfit', help='Path to save model and logs')
+    parser.add_argument('--out_path', default='results/baeline', help='Path to save model and logs')
     parser.add_argument('--data_path', default='data/VCTK-corpus/hubert100', help='Path to sequence data')
     parser.add_argument('--n_tokens', default=100, help='number of unique HuBERT tokens to use (which represent how many clusters were used)')
     parser.add_argument('--f0_path', default='data/VCTK-corpus/hubert100/f0_stats.pkl', help='Pitch normalisation stats pickle')
