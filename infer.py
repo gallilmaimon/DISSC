@@ -1,6 +1,6 @@
 import argparse
 import os
-import shutil
+import random
 
 import torch
 import pickle
@@ -20,10 +20,27 @@ from model.pitch_predictor import PitchPredictor
 from utils import seed_everything
 
 
+def _infer_sample(seqs, spk_id, name, f_min, scale, out_path, len_model=None, pitch_model=None) -> dict:
+    cur_seq = seqs[seqs != args.n_tokens].view(1, -1)
+    if len_model:
+        with torch.no_grad():
+            lens = len_model(cur_seq, spk_id)
+        cur_seq = torch.repeat_interleave(cur_seq, torch.round(torch.clamp(lens[0], min=1)).int()).view(1, -1)
+    if pitch_model:
+        with torch.no_grad():
+            pitches = pitch_model.infer_freq(cur_seq, spk_id, f_min, scale)
+
+    out = {'units': cur_seq[0].cpu().numpy().tolist(), 'f0': pitches[0].cpu().numpy().tolist(), 'audio': name}
+    with open(out_path, 'a+') as f:
+        f.write(f'{json.dumps(out)}\n')
+
+    return out
+
 def infer(input_path: str, device: str = 'cuda:0', args=None) -> None:
     _padding_value = -1 if args.pred_len else -100
 
     spk_id_dict = get_spkrs_dict(f'{os.path.dirname(input_path)}/train.txt')
+    out_path = f'{args.out_path}/{os.path.basename(input_path)}'
 
     with open(args.f0_path, 'rb') as f:
         f0_param_dict = pickle.load(f)
@@ -57,24 +74,28 @@ def infer(input_path: str, device: str = 'cuda:0', args=None) -> None:
         pitch_model.eval()
         pitch_model.load_state_dict(torch.load(args.f0_model + 'best_model.pth'))
 
+    # select target speakers if performing voice conversion
+    target_spkrs = None
+    if args.vc:
+        if args.target_speakers:
+            target_spkrs = args.target_speakers
+        else:
+            target_spkrs = random.sample(spk_id_dict.keys(), k=min(1, len(spk_id_dict.keys())))
+
     for i, batch in enumerate(dl):
         seqs, _, spk_id, name = batch
         seqs = seqs.to(device)
         spk_id = spk_id.to(device)
+        # reconstruction
+        _infer_sample(seqs, spk_id, name[0], f_min, scale, out_path, len_model, pitch_model)
 
-        cur_seq = seqs[seqs != args.n_tokens].view(1, -1)
-
-        if len_model:
-            with torch.no_grad():
-                lens = len_model(cur_seq, spk_id)
-            cur_seq = torch.repeat_interleave(cur_seq, torch.round(torch.clamp(lens[0], min=1)).int()).view(1, -1)
-        if pitch_model:
-            with torch.no_grad():
-                pitches = pitch_model.infer_freq(cur_seq, spk_id, f_min, scale)
-
-        out = {'units': cur_seq[0].cpu().numpy().tolist(), 'f0': pitches[0].cpu().numpy().tolist(), 'audio': name}
-        with open(f'{args.out_path}/{os.path.basename(input_path)}', 'a+') as f:
-            f.write(f'{json.dumps(out)}\n')
+        # voice conversion
+        if target_spkrs:
+            for t in target_spkrs:
+                spk_id[0][0] = spk_id_dict[t]
+                f_name, ext = os.path.splitext(os.path.basename(name[0]))
+                _infer_sample(seqs, spk_id, name[0], f_min, scale, f'{args.out_path}/{t}_{os.path.basename(input_path)}', len_model, pitch_model)
+                # _infer_sample(seqs, spk_id, f'{f_name}_{t}{ext}', f_min, scale, out_path, len_model, pitch_model)
 
 
 if __name__ == '__main__':
@@ -91,6 +112,9 @@ if __name__ == '__main__':
     parser.add_argument('--seed', default=42, help='random seed, use -1 for non-determinism')
     parser.add_argument('--f0_path', default='data/VCTK-corpus/hubert100/f0_stats.pkl',
                         help='Pitch normalisation stats pickle')
+    parser.add_argument('--vc', action='store_false', help='If true we convert speakers and not only reconstruct')
+    parser.add_argument('--target_speakers', default=None, help='Target speakers for VC. If none random speakers are used')
+
 
     args = parser.parse_args()
 
