@@ -112,7 +112,7 @@ if __name__ == '__main__':
     parser.add_argument('--seed', default=42, help='random seed, use -1 for non-determinism')
     parser.add_argument('--f0_path', default='data/VCTK-corpus/hubert100/f0_stats.pkl',
                         help='Pitch normalisation stats pickle')
-    parser.add_argument('--vc', action='store_false', help='If true we convert speakers and not only reconstruct')
+    parser.add_argument('--vc', action='store_true', help='If true we convert speakers and not only reconstruct')
     parser.add_argument('--target_speakers', default=None, help='Target speakers for VC. If none random speakers are used')
 
 
