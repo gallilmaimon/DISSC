@@ -3,6 +3,8 @@ import tensorflow as tf
 import random, os
 import numpy as np
 import torch
+from itertools import groupby
+from scipy.interpolate import interp1d
 
 
 def seed_everything(seed: int):
@@ -33,3 +35,18 @@ def log_metrics(logger, value_dict: dict, epoch: int,  name: str = 'train'):
             tf.summary.scalar(k, v, step=epoch)
             out_str += f'{name}_{k}: {v:.5f}, '
     print(out_str)
+
+def interp(vals, target_len):
+    cur_len = len(vals)
+    if cur_len == 1:
+        return np.array(target_len * vals)
+    if target_len == cur_len:
+        return np.array(vals)
+    return interp1d(np.linspace(0., 1., cur_len), vals, bounds_error=False, kind='nearest', fill_value=0)(np.linspace(0., 1., target_len))
+
+def morph_seq_len(units, pitch, t_lens):
+    out = []
+    for i, (k,g) in enumerate(groupby(zip(units, pitch), key=lambda x:x[0])):
+        out.append(interp([f for _, f in g], t_lens[i]))
+
+    return np.concatenate(out)

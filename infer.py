@@ -10,30 +10,37 @@ from torch.utils.data import DataLoader, Subset
 from dataset.utils import get_spkrs_dict, prep_stats_tensors
 
 # length prediction
-from dataset.len_dataset import LenDataset
+from dataset.len_dataset import dedup_seq
 from model.len_predictor import LenPredictor
 
 # pitch prediction
 from dataset.pitch_dataset import PitchDataset
 from model.pitch_predictor import PitchPredictor
 
-from utils import seed_everything
+from utils import seed_everything, morph_seq_len
 
 
-def _infer_sample(seqs, spk_id, name, f_min, scale, out_path, len_model=None, pitch_model=None) -> dict:
-    cur_seq = seqs[seqs != args.n_tokens].view(1, -1)
+def _infer_sample(seqs, pitch, spk_id, name, f_min, scale, out_path, len_model=None, pitch_model=None) -> dict:
+    in_seq = seqs[seqs != args.n_tokens].view(1, -1)
     if len_model:
+        dd_seq, _ = dedup_seq(in_seq.cpu().numpy()[0])
+        dd_seq = torch.tensor(dd_seq, device=in_seq.device).unsqueeze(0)
         with torch.no_grad():
-            lens = len_model(cur_seq, spk_id)
-        cur_seq = torch.repeat_interleave(cur_seq, torch.round(torch.clamp(lens[0], min=1)).int()).view(1, -1)
+            lens = len_model(dd_seq, spk_id)
+            lens = torch.round(torch.clamp(lens[0], min=1)).int()
+        out_seq = torch.repeat_interleave(dd_seq, lens).view(1, -1)
+    else:
+        out_seq = in_seq
+
     if pitch_model:
         with torch.no_grad():
-            pitches = pitch_model.infer_freq(cur_seq, spk_id, f_min, scale)
-
-    out = {'units': cur_seq[0].cpu().numpy().tolist(), 'f0': pitches[0].cpu().numpy().tolist(), 'audio': name}
+            pitches = pitch_model.infer_freq(out_seq, spk_id, f_min, scale)
+            pitches = pitches[0].cpu().numpy().tolist()
+    else:  # If not predicting the pitch directly it is interpolated heuristically
+        pitches = morph_seq_len(in_seq[0].cpu().numpy(), pitch.numpy(), lens.cpu().numpy()).tolist()
+    out = {'units': out_seq[0].cpu().numpy().tolist(), 'f0': pitches, 'audio': name}
     with open(out_path, 'a+') as f:
         f.write(f'{json.dumps(out)}\n')
-
     return out
 
 def infer(input_path: str, device: str = 'cuda:0', args=None) -> None:
@@ -49,13 +56,8 @@ def infer(input_path: str, device: str = 'cuda:0', args=None) -> None:
     with open(args.f0_model + 'f0_params.pkl', 'rb') as f:
         n_bins, f_min, scale = pickle.load(f)
 
-    if args.pred_len:
-        ds = LenDataset(input_path, spk_id_dict, args.n_tokens, _padding_value)
-
-    else:
-        ds = PitchDataset(input_path, spk_id_dict, f0_param_dict, n_bins=n_bins, f_min=f_min, scale=scale,
-                          n_tokens=args.n_tokens, padding_value=_padding_value)
-
+    ds = PitchDataset(input_path, spk_id_dict, f0_param_dict, n_bins=n_bins, f_min=f_min, scale=scale,
+                      n_tokens=args.n_tokens, padding_value=_padding_value, normalise_pitch=False)
     dl = DataLoader(Subset(ds, range(args.n)), batch_size=1, shuffle=False)
 
     # define and load models
@@ -83,19 +85,19 @@ def infer(input_path: str, device: str = 'cuda:0', args=None) -> None:
             target_spkrs = random.sample(spk_id_dict.keys(), k=min(1, len(spk_id_dict.keys())))
 
     for i, batch in enumerate(dl):
-        seqs, _, spk_id, name = batch
+        seqs, pitch, spk_id, name = batch
         seqs = seqs.to(device)
         spk_id = spk_id.to(device)
+        pitch = pitch[0][pitch[0] != ds._pad_val]  # take only actual original pitch
+
         # reconstruction
-        _infer_sample(seqs, spk_id, name[0], f_min, scale, out_path, len_model, pitch_model)
+        _infer_sample(seqs, pitch, spk_id, name[0], f_min, scale, out_path, len_model, pitch_model)
 
         # voice conversion
         if target_spkrs:
             for t in target_spkrs:
                 spk_id[0][0] = spk_id_dict[t]
-                f_name, ext = os.path.splitext(os.path.basename(name[0]))
-                _infer_sample(seqs, spk_id, name[0], f_min, scale, f'{args.out_path}/{t}_{os.path.basename(input_path)}', len_model, pitch_model)
-                # _infer_sample(seqs, spk_id, f'{f_name}_{t}{ext}', f_min, scale, out_path, len_model, pitch_model)
+                _infer_sample(seqs, pitch, spk_id, name[0], f_min, scale, f'{args.out_path}/{t}_{os.path.basename(input_path)}', len_model, pitch_model)
 
 
 if __name__ == '__main__':
