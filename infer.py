@@ -39,7 +39,7 @@ def _infer_sample(seqs, pitch, spk_id, name, f_min, scale, out_path, len_model=N
     else:  # If not predicting the pitch directly it is interpolated heuristically
         pitches = morph_seq_len(in_seq[0].cpu().numpy(), pitch.numpy(), lens.cpu().numpy()).tolist()
     out = {'units': out_seq[0].cpu().numpy().tolist(), 'f0': pitches, 'audio': name}
-    with open(out_path, 'a+') as f:
+    with open(out_path, 'w') as f:
         f.write(f'{json.dumps(out)}\n')
     return out
 
