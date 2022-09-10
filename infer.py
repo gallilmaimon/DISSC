@@ -103,20 +103,18 @@ def infer(input_path: str, device: str = 'cuda:0', args=None) -> None:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--input_path', default='data/VCTK-corpus/hubert100/val.txt', help='Path to txt file of encoded HuBERT data')
-    parser.add_argument('--n', default=10, help='number of samples to perform inference on')
+    parser.add_argument('-n', default=10, type=int, help='number of samples to perform inference on')
     parser.add_argument('--out_path', default='data/VCTK-corpus/pred_hubert', help='Path to save predicted sequence')
     parser.add_argument('--pred_len', action='store_true', help='If true we predict the output length as well')
     parser.add_argument('--pred_pitch', action='store_true', help='If true we predict the output pitch as well')
     parser.add_argument('--len_model', default='results/baseline/len/best_model.pth', help='Path of len prediction model')
     parser.add_argument('--f0_model', default='results/baseline/pitch/', help='Path of pitch prediction model & stats')
-    parser.add_argument('--n_tokens', default=100, help='number of unique HuBERT tokens to use (which represent how many clusters were used)')
+    parser.add_argument('--n_tokens', default=100, type=int, help='number of unique HuBERT tokens to use (which represent how many clusters were used)')
     parser.add_argument('--device', default='cuda:0', help='Device to run on')
-    parser.add_argument('--seed', default=42, help='random seed, use -1 for non-determinism')
-    parser.add_argument('--f0_path', default='data/VCTK-corpus/hubert100/f0_stats.pkl',
-                        help='Pitch normalisation stats pickle')
+    parser.add_argument('--seed', default=42, type=int, help='random seed, use -1 for non-determinism')
+    parser.add_argument('--f0_path', default='data/VCTK-corpus/hubert100/f0_stats.pkl', help='Pitch normalisation stats pickle')
     parser.add_argument('--vc', action='store_true', help='If true we convert speakers and not only reconstruct')
     parser.add_argument('--target_speakers', nargs='+', default=None, help='Target speakers for VC. If none random speakers are used')
-
 
     args = parser.parse_args()
 
