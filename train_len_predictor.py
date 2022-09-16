@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from dataset.utils import get_spkrs_dict
 from dataset.len_dataset import LenDataset
 from model.len_predictor import LenPredictor
-from loss.len_loss import LenLoss
+from loss.len_loss import LenMSELoss, LenMAELoss, LenExactAccuracy, LenOneOffAccuracy, LenSmoothL1Loss
 from utils import seed_everything, init_loggers, log_metrics
 
 
@@ -28,7 +28,11 @@ def train(data_path: str, device: str = 'cuda:0', args=None) -> None:
     model.to(device)
 
     opt = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
-    len_loss = LenLoss(pad_idx=_padding_value)
+    mse = LenMSELoss(pad_idx=_padding_value)
+    smooth_l1 = LenSmoothL1Loss(pad_idx=_padding_value)
+    mae = LenMAELoss(pad_idx=_padding_value)
+    acc = LenExactAccuracy(pad_idx=_padding_value)
+    acc1 = LenOneOffAccuracy(pad_idx=_padding_value)
 
     best_loss = torch.inf
 
@@ -36,7 +40,11 @@ def train(data_path: str, device: str = 'cuda:0', args=None) -> None:
         print(f'\nEpoch: {epoch}')
 
         model.train()
-        total_train_loss = 0
+        total_train_mse = 0
+        total_train_mae = 0
+        total_train_smooth_l1 = 0
+        total_train_acc = 0
+        total_train_acc1 = 0
         num_train_loss_samples = 0  # calculates the total number of samples which aren't padding in order to normalise loss
 
         for i, batch in enumerate(dl_train):
@@ -47,11 +55,16 @@ def train(data_path: str, device: str = 'cuda:0', args=None) -> None:
             opt.zero_grad()
 
             preds = model(seqs, spk_id)
-            loss = len_loss(preds, lens)
+            loss = mae(preds, lens)
             loss.backward()
             opt.step()
 
-            total_train_loss += loss
+            with torch.no_grad():
+                total_train_mse += mse(preds, lens)
+                total_train_smooth_l1 += smooth_l1(preds, lens)
+                total_train_mae += loss
+                total_train_acc += acc(preds, lens)
+                total_train_acc1 += acc1(preds, lens)
             cur_n_samples = (seqs != args.n_tokens).sum()
             num_train_loss_samples += cur_n_samples.detach().cpu()
 
@@ -60,7 +73,11 @@ def train(data_path: str, device: str = 'cuda:0', args=None) -> None:
 
         # validation
         model.eval()
-        total_val_loss = 0
+        total_val_mse = 0
+        total_val_mae = 0
+        total_val_smooth_l1 = 0
+        total_val_acc = 0
+        total_val_acc1 = 0
         num_val_loss_samples = 0  # calculates the total number of samples which aren't padding in order to normalise loss
         for i, batch in enumerate(dl_val):
             seqs, lens, spk_id, _ = batch
@@ -69,28 +86,39 @@ def train(data_path: str, device: str = 'cuda:0', args=None) -> None:
             spk_id = spk_id.to(device)
             with torch.no_grad():
                 preds = model(seqs, spk_id)
-                loss = len_loss(preds, lens)
-            total_val_loss += loss
+                total_val_mse += mse(preds, lens)
+                total_val_mae += mae(preds, lens)
+                total_val_smooth_l1 += smooth_l1(preds, lens)
+                total_val_acc += acc(preds, lens)
+                total_val_acc1 += acc1(preds, lens)
             num_val_loss_samples += (seqs != args.n_tokens).sum()
 
         # save best model
-        if total_val_loss < best_loss:
+        if total_val_mse < best_loss:
             torch.save(model.state_dict(), out_path + '/best_model.pth')
-            best_loss = total_val_loss
+            best_loss = total_val_mse
 
-        log_metrics(train_logger, {"loss": total_train_loss.detach().cpu() / num_train_loss_samples}, epoch, 'train')
-        log_metrics(val_logger, {"loss": total_val_loss.detach().cpu() / num_val_loss_samples.detach().cpu()}, epoch, 'val')
+        log_metrics(train_logger, {"MSE": total_train_mse.detach().cpu() / num_train_loss_samples,
+                                   "MAE": total_train_mae.detach().cpu() / num_train_loss_samples,
+                                   "Accuracy": total_train_acc.detach().cpu() / num_train_loss_samples,
+                                   "Accuracy_1": total_train_acc1.detach().cpu() / num_train_loss_samples,
+                                   "Smooth L1": total_train_smooth_l1.detach().cpu() / num_train_loss_samples}, epoch, 'train')
+        log_metrics(val_logger, {"MSE": total_val_mse.detach().cpu() / num_val_loss_samples.detach().cpu(),
+                                 "MAE": total_val_mae.detach().cpu() / num_val_loss_samples.detach().cpu(),
+                                 "Accuracy": total_val_acc.detach().cpu() / num_val_loss_samples.detach().cpu(),
+                                 "Accuracy_1": total_val_acc1.detach().cpu() / num_val_loss_samples.detach().cpu(),
+                                 "Smooth L1": total_val_smooth_l1.detach().cpu() / num_val_loss_samples.detach().cpu()}, epoch, 'val')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--out_path', default='results/baseline_lr', help='Path to save model and logs')
+    parser.add_argument('--out_path', default='results/baseline_new', help='Path to save model and logs')
     parser.add_argument('--data_path', default='data/VCTK-corpus/hubert100', help='Path to sequence data')
     parser.add_argument('--n_tokens', default=100, type=int, help='number of unique HuBERT tokens to use (which represent how many clusters were used)')
     parser.add_argument('--device', default='cuda:0', help='Device to run on')
     parser.add_argument('--seed', default=42, type=int, help='random seed, use -1 for non-determinism')
     parser.add_argument('--batch_size', default=32, type=int, help='batch size for train and inference')
-    parser.add_argument('--learning_rate', default=3e-3, type=float, help='initial learning rate of the Adam optimiser')
+    parser.add_argument('--learning_rate', default=3e-4, type=float, help='initial learning rate of the Adam optimiser')
     parser.add_argument('--n_epochs', default=200, type=int, help='number of training epochs')
     parser.add_argument('--n_bins', default=50, type=int, help='number of uniform bins for splitting the normalised frequencies')
 

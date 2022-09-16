@@ -39,7 +39,7 @@ def _infer_sample(seqs, pitch, spk_id, name, f_min, scale, out_path, len_model=N
     else:  # If not predicting the pitch directly it is interpolated heuristically
         pitches = morph_seq_len(in_seq[0].cpu().numpy(), pitch.numpy(), lens.cpu().numpy()).tolist()
     out = {'units': out_seq[0].cpu().numpy().tolist(), 'f0': pitches, 'audio': name}
-    with open(out_path, 'w') as f:
+    with open(out_path, 'a+') as f:
         f.write(f'{json.dumps(out)}\n')
     return out
 
@@ -107,7 +107,7 @@ if __name__ == '__main__':
     parser.add_argument('--out_path', default='data/VCTK-corpus/pred_hubert', help='Path to save predicted sequence')
     parser.add_argument('--pred_len', action='store_true', help='If true we predict the output length as well')
     parser.add_argument('--pred_pitch', action='store_true', help='If true we predict the output pitch as well')
-    parser.add_argument('--len_model', default='results/baseline/len/best_model.pth', help='Path of len prediction model')
+    parser.add_argument('--len_model', default='results/baseline_new/len/best_model.pth', help='Path of len prediction model')
     parser.add_argument('--f0_model', default='results/baseline/pitch/', help='Path of pitch prediction model & stats')
     parser.add_argument('--n_tokens', default=100, type=int, help='number of unique HuBERT tokens to use (which represent how many clusters were used)')
     parser.add_argument('--device', default='cuda:0', help='Device to run on')
