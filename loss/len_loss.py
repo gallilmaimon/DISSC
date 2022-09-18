@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+import torch.nn.functional as F
 
 class LenMSELoss(nn.Module):
     def __init__(self, pad_idx=-1):
@@ -11,6 +12,23 @@ class LenMSELoss(nn.Module):
         mask = (lens != self.pad_idx)
         total_loss = self.mse(preds, lens)
         return (mask * total_loss).sum()
+
+class LenSumLoss(nn.Module):
+    def __init__(self, pad_idx=-1):
+        super(LenSumLoss, self).__init__()
+        self.pad_idx = pad_idx
+        self.mse = nn.MSELoss(reduction='none')
+
+    def forward(self, preds, lens):
+        # This is used to encourage nearby errors to cancel out, as to not cause a length bias
+        diff4 = (F.avg_pool2d((preds - lens).unsqueeze(0), (1, 4)) * 4) ** 2
+        diff_mask4 = ~F.max_pool2d((lens == self.pad_idx).unsqueeze(0).float(), (1, 4)).bool()
+        diff_loss4 = (diff_mask4 * diff4).sum()
+
+        mask = (lens != self.pad_idx)
+        total_loss = self.mse(preds, lens)
+        return (mask * total_loss).sum()  + 0.5 * diff_loss4
+
 
 class LenMAELoss(nn.Module):
     def __init__(self, pad_idx=-1):

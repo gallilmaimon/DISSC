@@ -3,8 +3,11 @@ from torch import nn
 
 
 class LenPredictor(nn.Module):
-    def __init__(self, n_tokens=100, n_speakers=99, emb_size=32):
+    def __init__(self, n_tokens=100, n_speakers=99, emb_size=32, norm_mean=0, norm_std=1):
         super(LenPredictor, self).__init__()
+        # used to effectively normalise the labels
+        self.norm_mean = norm_mean
+        self.norm_std = norm_std
 
         self.token_emb = nn.Embedding(n_tokens + 1, emb_size, padding_idx=n_tokens)
         self.spk_emb = nn.Embedding(n_speakers, emb_size)
