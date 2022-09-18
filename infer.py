@@ -1,6 +1,7 @@
 import argparse
 import os
 import random
+import shutil
 
 import torch
 import pickle
@@ -83,6 +84,13 @@ def infer(input_path: str, device: str = 'cuda:0', args=None) -> None:
             target_spkrs = args.target_speakers
         else:
             target_spkrs = random.sample(spk_id_dict.keys(), k=min(1, len(spk_id_dict.keys())))
+
+    # remove existing files
+    os.remove(out_path) if os.path.exists(out_path) else ''
+    if target_spkrs:
+        for t in target_spkrs:
+            p = f'{args.out_path}/{t}_{os.path.basename(input_path)}'
+            os.remove(p) if os.path.exists(p) else ''
 
     for i, batch in enumerate(dl):
         seqs, pitch, spk_id, name = batch
