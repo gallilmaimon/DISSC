@@ -67,7 +67,8 @@ def infer(input_path: str, device: str = 'cuda:0', args=None) -> None:
         len_model = LenPredictor(n_tokens=args.n_tokens, n_speakers=len(spk_id_dict))
         len_model.to(device)
         len_model.eval()
-        len_model.load_state_dict(torch.load(args.len_model))
+        len_model.load_state_dict(torch.load(args.len_model + 'best_model.pth'))
+        len_model.norm_mean, len_model.norm_std = torch.load(args.len_model + 'len_norm_stats.pth')
 
     if args.pred_pitch:
         pitch_model = PitchPredictor(args.n_tokens, len(spk_id_dict), nbins=n_bins,
@@ -115,7 +116,7 @@ if __name__ == '__main__':
     parser.add_argument('--out_path', default='data/VCTK-corpus/pred_hubert', help='Path to save predicted sequence')
     parser.add_argument('--pred_len', action='store_true', help='If true we predict the output length as well')
     parser.add_argument('--pred_pitch', action='store_true', help='If true we predict the output pitch as well')
-    parser.add_argument('--len_model', default='results/baseline_new/len/best_model.pth', help='Path of len prediction model')
+    parser.add_argument('--len_model', default='results/baseline/len/', help='Path of len prediction model')
     parser.add_argument('--f0_model', default='results/baseline/pitch/', help='Path of pitch prediction model & stats')
     parser.add_argument('--n_tokens', default=100, type=int, help='number of unique HuBERT tokens to use (which represent how many clusters were used)')
     parser.add_argument('--device', default='cuda:0', help='Device to run on')

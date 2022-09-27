@@ -28,6 +28,8 @@ def train(data_path: str, device: str = 'cuda:0', args=None) -> None:
     model = LenPredictor(n_tokens=args.n_tokens, n_speakers=len(spk_id_dict), norm_mean=lens_train.mean(), norm_std=lens_train.std())
     model.to(device)
 
+    torch.save((model.norm_mean, model.norm_std), out_path + '/len_norm_stats.pth')
+
     opt = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
 
     loss_s = LenSumLoss(pad_idx=_padding_value)
@@ -39,8 +41,7 @@ def train(data_path: str, device: str = 'cuda:0', args=None) -> None:
     best_mse = torch.inf
 
     for epoch in range(args.n_epochs):
-        print(f'\nEpoch: {epoch}')
-
+        print(f'Epoch: {epoch}')
         model.train()
         total_train_loss = 0
         total_train_mse = 0
@@ -114,7 +115,7 @@ def train(data_path: str, device: str = 'cuda:0', args=None) -> None:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--out_path', default='results/baseline_mse', help='Path to save model and logs')
+    parser.add_argument('--out_path', default='results/baseline', help='Path to save model and logs')
     parser.add_argument('--data_path', default='data/VCTK-corpus/hubert100', help='Path to sequence data')
     parser.add_argument('--n_tokens', default=100, type=int, help='number of unique HuBERT tokens to use (which represent how many clusters were used)')
     parser.add_argument('--device', default='cuda:0', help='Device to run on')

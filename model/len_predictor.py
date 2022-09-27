@@ -3,7 +3,7 @@ from torch import nn
 
 
 class LenPredictor(nn.Module):
-    def __init__(self, n_tokens=100, n_speakers=99, emb_size=32, norm_mean=0, norm_std=1):
+    def __init__(self, n_tokens=100, n_speakers=99, emb_size=32, norm_mean=torch.tensor(0), norm_std=torch.tensor(1)):
         super(LenPredictor, self).__init__()
         # used to effectively normalise the labels
         self.norm_mean = norm_mean
@@ -30,4 +30,4 @@ class LenPredictor(nn.Module):
         cnn1 = self.leaky(self.dropout(self.bn1(self.cnn1(emb_seq.transpose(1, 2)))))
         cnn1 = self.leaky(self.dropout(self.bn11(self.cnn11(cnn1))))
         cnn1 = self.leaky(self.dropout(self.bn12(self.cnn12(cnn1))))
-        return self.cnn2(cnn1).squeeze(1)
+        return self.cnn2(cnn1).squeeze(1) * self.norm_std + self.norm_mean
