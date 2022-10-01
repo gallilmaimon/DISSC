@@ -28,7 +28,8 @@ def calculate_pitch_stats(data_path: str, out_path: str) -> None:
 
     speaker_stats = dict()
     for k in speaker_fs.keys():
-        speaker_stats[k] = {'mean': np.mean(speaker_fs[k]), 'std': np.std(speaker_fs[k])}
+        speaker_fs_k = np.array(speaker_fs[k])[np.array(speaker_fs[k]) != 0]
+        speaker_stats[k] = {'mean': speaker_fs_k.mean(), 'std': speaker_fs_k.std()}
 
     with open(out_path, 'wb') as f_out:
         pickle.dump(speaker_stats, f_out)

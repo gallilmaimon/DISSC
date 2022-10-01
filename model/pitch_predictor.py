@@ -2,9 +2,8 @@ import torch
 from torch import nn
 
 class PitchPredictor(nn.Module):
-    def __init__(self, n_tokens=100, n_speakers=199, emb_size=32, nbins=50, id2pitch_mean=None, id2pitch_std=None):
+    def __init__(self, n_tokens=100, n_speakers=199, emb_size=32, id2pitch_mean=None, id2pitch_std=None):
         super(PitchPredictor, self).__init__()
-        self.nbins = nbins
 
         # used for returning actual pitch, not just normalised results
         self.id2pitch_mean = id2pitch_mean
@@ -22,7 +21,10 @@ class PitchPredictor(nn.Module):
         self.cnn12 = nn.Conv1d(128, 128, kernel_size=(3,), padding=1)
         self.bn12 = nn.BatchNorm1d(128)
 
-        self.cnn2 = nn.Conv1d(128, nbins, kernel_size=(3,), padding=1)
+        self.cnn2 = nn.Conv1d(128, 128, kernel_size=(3,), padding=1)
+
+        self.cnn_class = nn.Conv1d(128, 1, kernel_size=(1,), padding=0)
+        self.cnn_reg = nn.Conv1d(128, 1, kernel_size=(1,), padding=0)
 
     def forward(self, seq, spk_id):
         emb_seq = self.token_emb(seq)
@@ -33,21 +35,15 @@ class PitchPredictor(nn.Module):
         cnn1 = self.leaky(self.dropout(self.bn11(self.cnn11(cnn1))))
         cnn1 = self.leaky(self.dropout(self.bn12(self.cnn12(cnn1))))
 
-        return self.cnn2(cnn1).squeeze(1)
+        cnn2 = self.leaky(self.dropout(self.cnn2(cnn1)))
 
-    def infer_norm_freq(self, seq, spk_id, fmin, scale):
-        return self.calc_norm_freq(self(seq, spk_id), fmin, scale)
+        return self.cnn_class(cnn2).squeeze(1), self.cnn_reg(cnn2).squeeze(1)
 
-    def calc_norm_freq(self, preds, fmin, scale):
-        preds = torch.sigmoid(preds.transpose(1, 2))  # calculate class probs
-        # Uses middle value for bin representative
-        f_weights = torch.linspace(fmin + 0.5 * scale, fmin + (self.nbins - 0.5) * scale, self.nbins, device=preds.device)
-        return torch.inner(preds, f_weights)
+    def infer_freq(self, seq, spk_id):
+        class_preds, reg_preds = self(seq, spk_id)
+        return self.calc_freq(class_preds, reg_preds, spk_id)
 
-    def infer_freq(self, seq, spk_id, fmin, scale):
-        norm_pitch = self.infer_norm_freq(seq, spk_id, fmin, scale)
-        return self.id2pitch_mean[spk_id.long()] + (norm_pitch * self.id2pitch_std[spk_id.long()])
-
-    def calc_freq(self, preds, fmin, scale, spk_id):
-        norm_pitch = self.calc_norm_freq(preds, fmin, scale)
-        return self.id2pitch_mean[spk_id.long()] + (norm_pitch * self.id2pitch_std[spk_id.long()])
+    def calc_freq(self, class_preds, reg_preds, spk_id):
+        spk_mask = (class_preds > 0)
+        preds = self.id2pitch_mean[spk_id.long()] + reg_preds * self.id2pitch_std[spk_id.long()]
+        return spk_mask * preds
