@@ -1,9 +1,9 @@
 import argparse
+import pickle
 import os
 import torch
 from torch.utils.data import DataLoader
 
-from dataset.utils import get_spkrs_dict
 from dataset.len_dataset import LenDataset
 from model.len_predictor import LenPredictor
 from loss.len_loss import LenMSELoss, LenMAELoss, LenExactAccuracy, LenOneOffAccuracy, LenSmoothL1Loss, LenSumLoss
@@ -16,7 +16,8 @@ def train(data_path: str, device: str = 'cuda:0', args=None) -> None:
     out_path = args.out_path + '/len'
     train_logger, val_logger = init_loggers(out_path)
 
-    spk_id_dict = get_spkrs_dict(f'{data_path}/train.txt')
+    with open(f'{args.data_path}/id_to_spkr.pkl', 'rb') as f:
+        spk_id_dict = {v: k for (k, v) in pickle.load(f).items()}
 
     ds_train = LenDataset(f'{data_path}/train.txt', spk_id_dict, args.n_tokens, _padding_value)
     dl_train = DataLoader(ds_train, batch_size=args.batch_size, shuffle=True)
