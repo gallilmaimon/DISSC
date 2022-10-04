@@ -8,5 +8,5 @@ if __name__ == '__main__':
 
     if seed is not None:
         seed_everything(seed)
-    train_path, _ = data_split(encoded_path, split_method='random', train_size=.7)
+    train_path, _ = data_split(encoded_path, split_method='paired_val')
     calculate_pitch_stats(train_path, stats_path)
