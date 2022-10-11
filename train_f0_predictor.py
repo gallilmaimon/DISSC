@@ -20,7 +20,7 @@ def train(data_path: str, f0_path: str, device: str = 'cuda:0', args: argparse =
     with open(f0_path, 'rb') as f:
         f0_param_dict = pickle.load(f)
     with open(f'{args.data_path}/id_to_spkr.pkl', 'rb') as f:
-        spk_id_dict = {v: k for (k, v) in pickle.load(f).items()}
+        spk_id_dict = {v: k for (k, v) in dict(enumerate(pickle.load(f))).items()}
     id2pitch_mean, id2pitch_std = prep_stats_tensors(spk_id_dict, f0_param_dict)
 
     ds_train = PitchDataset(f'{data_path}/train.txt', spk_id_dict, f0_param_dict, n_tokens=args.n_tokens,

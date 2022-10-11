@@ -46,8 +46,8 @@ def _infer_sample(seqs, pitch, spk_id, name, out_path, len_model=None, pitch_mod
 def infer(input_path: str, device: str = 'cuda:0', args=None) -> None:
     _padding_value = -1 if args.pred_len else -100
 
-    with open(f'{args.data_path}/id_to_spkr.pkl', 'rb') as f:
-        spk_id_dict = {v: k for (k, v) in pickle.load(f).items()}
+    with open(f'{os.path.dirname(args.input_path)}/id_to_spkr.pkl', 'rb') as f:
+        spk_id_dict = {v: k for (k, v) in dict(enumerate(pickle.load(f))).items()}
     out_path = f'{args.out_path}/{os.path.basename(input_path)}'
 
     with open(args.f0_path, 'rb') as f:

@@ -17,7 +17,7 @@ def train(data_path: str, device: str = 'cuda:0', args=None) -> None:
     train_logger, val_logger = init_loggers(out_path)
 
     with open(f'{args.data_path}/id_to_spkr.pkl', 'rb') as f:
-        spk_id_dict = {v: k for (k, v) in pickle.load(f).items()}
+        spk_id_dict = {v: k for (k, v) in dict(enumerate(pickle.load(f))).items()}
 
     ds_train = LenDataset(f'{data_path}/train.txt', spk_id_dict, args.n_tokens, _padding_value)
     dl_train = DataLoader(ds_train, batch_size=args.batch_size, shuffle=True)
