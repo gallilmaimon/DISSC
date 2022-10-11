@@ -39,11 +39,12 @@ class PitchPredictor(nn.Module):
 
         return self.cnn_class(cnn2).squeeze(1), self.cnn_reg(cnn2).squeeze(1)
 
-    def infer_freq(self, seq, spk_id):
+    def infer_freq(self, seq, spk_id, norm=False):
         class_preds, reg_preds = self(seq, spk_id)
-        return self.calc_freq(class_preds, reg_preds, spk_id)
+        return self.calc_freq(class_preds, reg_preds, spk_id, norm)
 
-    def calc_freq(self, class_preds, reg_preds, spk_id):
+    def calc_freq(self, class_preds, reg_preds, spk_id, norm=False):
         spk_mask = (class_preds > 0)
-        preds = self.id2pitch_mean[spk_id.long()] + reg_preds * self.id2pitch_std[spk_id.long()]
-        return spk_mask * preds
+        if not norm:
+            reg_preds = self.id2pitch_mean[spk_id.long()] + reg_preds * self.id2pitch_std[spk_id.long()]
+        return spk_mask * reg_preds

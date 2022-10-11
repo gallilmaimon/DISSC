@@ -20,7 +20,7 @@ from model.pitch_predictor import PitchPredictor
 from utils import seed_everything, morph_seq_len
 
 
-def _infer_sample(seqs, pitch, spk_id, name, out_path, len_model=None, pitch_model=None) -> dict:
+def _infer_sample(seqs, pitch, spk_id, name, out_path, len_model=None, pitch_model=None, norm_pitch=False) -> dict:
     in_seq = seqs[seqs != args.n_tokens].view(1, -1)
     if len_model:
         dd_seq, _ = dedup_seq(in_seq.cpu().numpy()[0])
@@ -34,7 +34,7 @@ def _infer_sample(seqs, pitch, spk_id, name, out_path, len_model=None, pitch_mod
 
     if pitch_model:
         with torch.no_grad():
-            pitches = pitch_model.infer_freq(out_seq, spk_id).cpu()
+            pitches = pitch_model.infer_freq(out_seq, spk_id, norm_pitch).cpu()
             pitches = pitches[0].numpy().tolist()
     else:  # If not predicting the pitch directly it is interpolated heuristically
         pitches = morph_seq_len(in_seq[0].cpu().numpy(), pitch.numpy(), lens.cpu().numpy()).tolist()
@@ -92,17 +92,21 @@ def infer(input_path: str, device: str = 'cuda:0', args=None) -> None:
     for i, batch in enumerate(dl):
         seqs, pitch, spk_id, name = batch
         seqs = seqs.to(device)
-        spk_id = spk_id.to(device)
         pitch = pitch[0][pitch[0] != ds._pad_val]  # take only actual original pitch
+        if args.norm_pitch:
+            ii = (pitch != 0)
+            pitch[ii] -= id2pitch_mean[spk_id[0].long()]
+            pitch[ii] /= id2pitch_std[spk_id[0].long()]
+        spk_id = spk_id.to(device)
 
         # reconstruction
-        _infer_sample(seqs, pitch, spk_id, name[0], out_path, len_model, pitch_model)
+        _infer_sample(seqs, pitch, spk_id, name[0], out_path, len_model, pitch_model, args.norm_pitch)
 
         # voice conversion
         if target_spkrs:
             for t in target_spkrs:
                 spk_id[0][0] = spk_id_dict[t]
-                _infer_sample(seqs, pitch, spk_id, name[0], f'{args.out_path}/{t}_{os.path.basename(input_path)}', len_model, pitch_model)
+                _infer_sample(seqs, pitch, spk_id, name[0], f'{args.out_path}/{t}_{os.path.basename(input_path)}', len_model, pitch_model, args.norm_pitch)
 
 
 if __name__ == '__main__':
@@ -119,6 +123,7 @@ if __name__ == '__main__':
     parser.add_argument('--seed', default=42, type=int, help='random seed, use -1 for non-determinism')
     parser.add_argument('--f0_path', default='data/VCTK-corpus/hubert100/f0_stats_new.pkl', help='Pitch normalisation stats pickle')
     parser.add_argument('--vc', action='store_true', help='If true we convert speakers and not only reconstruct')
+    parser.add_argument('--norm_pitch', action='store_false', help='If true we output a per-speaker normalised pitch')
     parser.add_argument('--target_speakers', nargs='+', default=None, help='Target speakers for VC. If none random speakers are used')
 
     args = parser.parse_args()
