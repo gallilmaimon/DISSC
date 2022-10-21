@@ -7,7 +7,7 @@ import pickle
 import json
 from torch.utils.data import DataLoader, Subset
 
-from dataset.utils import get_spkrs_dict, prep_stats_tensors
+from dataset.utils import prep_stats_tensors
 
 # length prediction
 from dataset.len_dataset import dedup_seq
@@ -27,7 +27,7 @@ def _infer_sample(seqs, pitch, spk_id, name, out_path, len_model=None, pitch_mod
         dd_seq = torch.tensor(dd_seq, device=in_seq.device).unsqueeze(0)
         with torch.no_grad():
             lens = len_model(dd_seq, spk_id)
-            lens = torch.round(torch.clamp(lens[0], min=1)).int()
+            lens = len_carryover_correction(lens)  # handles ideal quantisation
         out_seq = torch.repeat_interleave(dd_seq, lens).view(1, -1)
     else:
         out_seq = in_seq
@@ -108,6 +108,23 @@ def infer(input_path: str, device: str = 'cuda:0', args=None) -> None:
                 spk_id[0][0] = spk_id_dict[t]
                 _infer_sample(seqs, pitch, spk_id, name[0], f'{args.out_path}/{t}_{os.path.basename(input_path)}', len_model, pitch_model, args.norm_pitch)
 
+
+def len_carryover_correction(lens):
+    vals_ = []
+    a = (lens - torch.round(torch.clamp(lens[0], min=1)))[0]
+    total_sum = 0
+    for n in a:
+        total_sum += n
+        if total_sum >= 1:
+            vals_.append(1)
+            total_sum -= 1
+        elif total_sum <= -1:
+            vals_.append(-1)
+            total_sum += 1
+        else:
+            vals_.append(0)
+    # print(in_seq.shape[1], lens.sum().item(), (torch.round(torch.clamp(lens[0], min=1)).int() + torch.tensor(vals_).to(lens.device)).sum().item(), torch.round(torch.clamp(lens[0], min=1)).int().sum().item())
+    return torch.round(torch.clamp(lens[0], min=1)).int() + torch.tensor(vals_).to(lens.device)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

@@ -20,14 +20,32 @@ class LenPredictor(nn.Module):
         self.cnn12 = nn.Conv1d(128, 128, kernel_size=(3,), padding=1)
         self.bn12 = nn.BatchNorm1d(128)
 
+        self.cnn13 = nn.Conv1d(128, 128, kernel_size=(3,), padding=1)
+        self.bn13 = nn.BatchNorm1d(128)
+        self.cnn14 = nn.Conv1d(128, 128, kernel_size=(3,), padding=1)
+        self.bn14 = nn.BatchNorm1d(128)
+        self.cnn15 = nn.Conv1d(128, 128, kernel_size=(3,), padding=1)
+        self.bn15 = nn.BatchNorm1d(128)
+        self.cnn16 = nn.Conv1d(128, 128, kernel_size=(3,), padding=1)
+        self.bn16 = nn.BatchNorm1d(128)
+
         self.cnn2 = nn.Conv1d(128, 1, kernel_size=(3,), padding=1)
 
     def forward(self, seq, spk_id):
         emb_seq = self.token_emb(seq)
+        if self.training:  # This masks part of the sequence to avoid overfit and encourage disentanglement
+            mask = torch.cuda.FloatTensor(emb_seq.shape[0], emb_seq.shape[1]).uniform_() > 0.8
+            emb_seq[mask] = 0
+
         emb_spk = torch.repeat_interleave(self.spk_emb(spk_id), seq.shape[-1], dim=1)
         emb_seq = torch.cat([emb_seq, emb_spk], dim=-1)
 
         cnn1 = self.leaky(self.dropout(self.bn1(self.cnn1(emb_seq.transpose(1, 2)))))
         cnn1 = self.leaky(self.dropout(self.bn11(self.cnn11(cnn1))))
         cnn1 = self.leaky(self.dropout(self.bn12(self.cnn12(cnn1))))
+
+        cnn1 = self.leaky(self.dropout(self.bn13(self.cnn13(cnn1))))
+        cnn1 = self.leaky(self.dropout(self.bn14(self.cnn14(cnn1))))
+        cnn1 = self.leaky(self.dropout(self.bn15(self.cnn15(cnn1))))
+        cnn1 = self.leaky(self.dropout(self.bn16(self.cnn16(cnn1))))
         return self.cnn2(cnn1).squeeze(1) * self.norm_std + self.norm_mean
