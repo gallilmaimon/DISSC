@@ -4,7 +4,7 @@ import argparse
 import torch
 from torch.utils.data import DataLoader
 
-from dataset.utils import get_spkrs_dict, prep_stats_tensors
+from dataset.utils import prep_stats_tensors
 from dataset.pitch_dataset import PitchDataset
 from model.pitch_predictor import PitchPredictor
 from loss.pitch_loss import PitchLoss, PitchMAE, PitchMSE
@@ -113,7 +113,7 @@ if __name__ == '__main__':
     parser.add_argument('--seed', default=42, type=int, help='random seed, use -1 for non-determinism')
     parser.add_argument('--batch_size', default=32, type=int, help='batch size for train and inference')
     parser.add_argument('--learning_rate', default=3e-4, type=float, help='initial learning rate of the Adam optimiser')
-    parser.add_argument('--n_epochs', default=50, type=int, help='number of training epochs')
+    parser.add_argument('--n_epochs', default=25, type=int, help='number of training epochs')
 
     args = parser.parse_args()
 
