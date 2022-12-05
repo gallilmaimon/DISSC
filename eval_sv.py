@@ -3,8 +3,27 @@ import argparse
 import pandas as pd
 
 import torch
+import torchaudio
 from speechbrain.pretrained import SpeakerRecognition
 from speechbrain.utils.metric_stats import EER
+
+
+def prep_sample(ver_model, path):
+    signal, sr = torchaudio.load(str(path), channels_first=False)
+    return ver_model.audio_normalizer(signal, sr)
+
+def verify_files(ver_model, path_x, path_y):
+
+    waveform_x = prep_sample(ver_model, path_x)
+    waveform_y = prep_sample(ver_model, path_y)
+    # Fake batches:
+    batch_x = waveform_x.unsqueeze(0)
+    batch_y = waveform_y.unsqueeze(0)
+    # Verify:
+    score, decision = ver_model.verify_batch(batch_x, batch_y)
+    # Squeeze:
+    return score[0], decision[0]
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -29,7 +48,7 @@ if __name__ == '__main__':
         gt = f'{args.gt_path}/{row.ref}_mic2.flac'
         syn = f'{syn_path}/{row.syn_trgt}/{row.syn_sample}.wav'
         if os.path.isfile(gt) and os.path.isfile(syn):
-            scores[row.label].append(verification.verify_files(gt, syn)[0])
+            scores[row.label].append(verify_files(verification, gt, syn)[0])
         else:
             print(row.ref, row.syn_trgt)
 
