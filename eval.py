@@ -139,7 +139,7 @@ def log_results(err_dict, args, sr=16000):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--base_path', default='../results/vctk/', help='Base path to all conversion methods')
-    parser.add_argument('--method', default='sr', help='Base path to all conversion methods')
+    parser.add_argument('--method', default='sr', help='Name of conversion type, as in folder name')
     parser.add_argument('--device', default='cuda:0', help='Torch device')
     parser.add_argument('--target_speakers', nargs='+', default=['p231', 'p239', 'p245', 'p270'], help='Target speakers for VC. If none random speakers are used')
     args = parser.parse_args()
