@@ -1,6 +1,7 @@
 import argparse
 import os
 import random
+import pandas as pd
 
 import torch
 import pickle
@@ -45,6 +46,9 @@ def _infer_sample(seqs, pitch, spk_id, name, out_path, len_model=None, pitch_mod
 
 def infer(input_path: str, device: str = 'cuda:0', args=None) -> None:
     _padding_value = -1 if args.pred_len else -100
+
+    if args.sample_df:
+        df = pd.read_csv(args.sample_df, index_col=0)
 
     with open(f'{os.path.dirname(args.input_path)}/id_to_spkr.pkl', 'rb') as f:
         spk_id_dict = {v: k for (k, v) in dict(enumerate(pickle.load(f))).items()}
@@ -100,11 +104,15 @@ def infer(input_path: str, device: str = 'cuda:0', args=None) -> None:
         spk_id = spk_id.to(device)
 
         # reconstruction
-        _infer_sample(seqs, pitch, spk_id, name[0], out_path, len_model, pitch_model, args.norm_pitch)
+        if not args.sample_df:
+            _infer_sample(seqs, pitch, spk_id, name[0], out_path, len_model, pitch_model, args.norm_pitch)
 
         # voice conversion
         if target_spkrs:
-            for t in target_spkrs:
+            cur_target = target_spkrs
+            if args.sample_df:
+                cur_target = list(df[df.syn_sample == name[0].split('_mic2')[0]].syn_trgt.unique())
+            for t in cur_target:
                 spk_id[0][0] = spk_id_dict[t]
                 _infer_sample(seqs, pitch, spk_id, name[0], f'{args.out_path}/{t}_{os.path.basename(input_path)}', len_model, pitch_model, args.norm_pitch)
 
@@ -128,20 +136,21 @@ def len_carryover_correction(lens):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--input_path', default='data/ESD/hubert100/val.txt', help='Path to txt file of encoded HuBERT data')
+    parser.add_argument('--input_path', default='data/VCTK-corpus/hubert100/val.txt', help='Path to txt file of encoded HuBERT data')
     parser.add_argument('-n', default=10, type=int, help='number of samples to perform inference on')
-    parser.add_argument('--out_path', default='data/ESD/pred_hubert', help='Path to save predicted sequence')
+    parser.add_argument('--out_path', default='data/VCTK-corpus/pred_hubert', help='Path to save predicted sequence')
     parser.add_argument('--pred_len', action='store_true', help='If true we predict the output length as well')
     parser.add_argument('--pred_pitch', action='store_true', help='If true we predict the output pitch as well')
-    parser.add_argument('--len_model', default='results/esd_baseline/len/', help='Path of len prediction model')
-    parser.add_argument('--f0_model', default='results/esd_baseline/pitch/', help='Path of pitch prediction model & stats')
+    parser.add_argument('--len_model', default='results/vctk_baseline/len/', help='Path of len prediction model')
+    parser.add_argument('--f0_model', default='results/vctk_baseline/pitch/', help='Path of pitch prediction model & stats')
     parser.add_argument('--n_tokens', default=100, type=int, help='number of unique HuBERT tokens to use (which represent how many clusters were used)')
     parser.add_argument('--device', default='cuda:0', help='Device to run on')
     parser.add_argument('--seed', default=42, type=int, help='random seed, use -1 for non-determinism')
-    parser.add_argument('--f0_path', default='data/ESD/hubert100/f0_stats_new.pkl', help='Pitch normalisation stats pickle')
+    parser.add_argument('--f0_path', default='data/VCTK-corpus/hubert100/f0_stats.pkl', help='Pitch normalisation stats pickle')
     parser.add_argument('--vc', action='store_true', help='If true we convert speakers and not only reconstruct')
     parser.add_argument('--norm_pitch', action='store_false', help='If true we output a per-speaker normalised pitch')
     parser.add_argument('--target_speakers', nargs='+', default=None, help='Target speakers for VC. If none random speakers are used')
+    parser.add_argument('--sample_df', default=None, help='Path for specific conversions for each sample')
 
     args = parser.parse_args()
 
