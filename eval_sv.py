@@ -29,6 +29,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--base_path', default='../results/vctk/', help='base path to data and sample CSV')
     parser.add_argument('--gt_path', default='/cs/dataset/Download/adiyoss/vctk/wav16_trimmed_padded/', help='path to real original data')
+    parser.add_argument('--file_suffix', default='_mic2.flac', help='suffix to gt audio files')
     parser.add_argument('--method', default='sr', help='conversion type, as in file name')
     parser.add_argument('--device', default='cuda:0', help='Torch device')
     args = parser.parse_args()
@@ -45,7 +46,7 @@ if __name__ == '__main__':
     scores = {0: [], 1: []}
     for _, row in df.iterrows():
         print(f'\r{_}', end='')
-        gt = f'{args.gt_path}/{row.ref}_mic2.flac'
+        gt = f'{args.gt_path}/{row.ref}{args.file_suffix}'
         syn = f'{syn_path}/{row.syn_trgt}/{row.syn_sample}.wav'
         if os.path.isfile(gt) and os.path.isfile(syn):
             scores[row.label].append(verify_files(verification, gt, syn)[0])
