@@ -111,7 +111,7 @@ def infer(input_path: str, device: str = 'cuda:0', args=None) -> None:
         if target_spkrs:
             cur_target = target_spkrs
             if args.sample_df:
-                cur_target = list(df[df.syn_sample == name[0].split('_mic2')[0]].syn_trgt.unique())
+                cur_target = list(df[df.syn_sample == os.path.splitext(name[0])[0].split('_mic2')[0]].syn_trgt.unique())
             for t in cur_target:
                 spk_id[0][0] = spk_id_dict[t]
                 _infer_sample(seqs, pitch, spk_id, name[0], f'{args.out_path}/{t}_{os.path.basename(input_path)}', len_model, pitch_model, args.norm_pitch)
