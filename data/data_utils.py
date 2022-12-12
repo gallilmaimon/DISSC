@@ -21,7 +21,7 @@ def data_split(data_path: str, split_method: str = 'random', train_size:float = 
         with open(data_path, 'r') as f, open(base_path / 'train.txt', 'w') as f_tr, \
                 open(base_path / 'val.txt', 'w') as f_val:
             for line in f.readlines():
-                audio_num = int(eval(line)['audio'].split('_')[1])
+                audio_num = int(eval(line)['audio'].split('_')[1].split('.')[0])
                 if audio_num <= 24:
                     f_val.write(line)
                 else:
