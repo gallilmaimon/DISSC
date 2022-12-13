@@ -25,10 +25,10 @@ def train(data_path: str, f0_path: str, device: str = 'cuda:0', args: argparse =
 
     ds_train = PitchDataset(f'{data_path}/train.txt', spk_id_dict, f0_param_dict, n_tokens=args.n_tokens,
                             padding_value=_padding_value)
-    dl_train = DataLoader(ds_train, batch_size=args.batch_size, shuffle=True)
-    ds_val = PitchDataset(f'{data_path}/val.txt', spk_id_dict, f0_param_dict, n_tokens=args.n_tokens, 
+    dl_train = DataLoader(ds_train, batch_size=args.batch_size, shuffle=True, num_workers=0)
+    ds_val = PitchDataset(f'{data_path}/val.txt', spk_id_dict, f0_param_dict, n_tokens=args.n_tokens,
                           padding_value=_padding_value)
-    dl_val = DataLoader(ds_val, batch_size=args.batch_size, shuffle=False)
+    dl_val = DataLoader(ds_val, batch_size=args.batch_size, shuffle=False, num_workers=0)
 
     model = PitchPredictor(args.n_tokens, len(spk_id_dict), id2pitch_mean=id2pitch_mean.to(args.device),
                            id2pitch_std=id2pitch_std.to(args.device))
@@ -105,15 +105,15 @@ def train(data_path: str, f0_path: str, device: str = 'cuda:0', args: argparse =
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--out_path', default='results/baseline', help='Path to save model and logs')
-    parser.add_argument('--data_path', default='data/ESD/hubert100', help='Path to sequence data')
+    parser.add_argument('--out_path', default='results/syn_vctk', help='Path to save model and logs')
+    parser.add_argument('--data_path', default='data/Syn_VCTK/hubert100/', help='Path to sequence data')
     parser.add_argument('--n_tokens', default=100, type=int, help='number of unique HuBERT tokens to use (which represent how many clusters were used)')
-    parser.add_argument('--f0_path', default='data/ESD/hubert100/f0_stats.pkl', help='Pitch normalisation stats pickle')
+    parser.add_argument('--f0_path', default='data/Syn_VCTK/hubert100/f0_stats.pkl', help='Pitch normalisation stats pickle')
     parser.add_argument('--device', default='cuda:0', help='Device to run on')
     parser.add_argument('--seed', default=42, type=int, help='random seed, use -1 for non-determinism')
     parser.add_argument('--batch_size', default=32, type=int, help='batch size for train and inference')
     parser.add_argument('--learning_rate', default=3e-4, type=float, help='initial learning rate of the Adam optimiser')
-    parser.add_argument('--n_epochs', default=20, type=int, help='number of training epochs')
+    parser.add_argument('--n_epochs', default=70, type=int, help='number of training epochs')
 
     args = parser.parse_args()
 
