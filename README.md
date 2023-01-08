@@ -8,8 +8,8 @@ __Abstract__: Voice conversion is the task of making a spoken utterance by one s
 ## Quick Links
 * [Samples](https://pages.cs.huji.ac.il/adiyoss-lab/dissc/)
 * [Setup](#setup)
-* Inference (with pretrained models)
-* Training
+* [Inference (with pretrained models)](#infer)
+* [Training](#train)
 
 ## Setup
 We present all setup requirements for running all parts of the code - including evaluation metrics, and all datasets. This adds further limitations which might not be mandatory otherwise, such as Montreal Forced Aligner requiring Conda installation because of Kaldi. You can also install requirements and download datasets by use.
@@ -50,19 +50,16 @@ python3 preprocess.py ...
 
 
 #### For ESD
-```sh
-# ESD
-
-```
+1. Download the preprocessed data from [here](https://drive.google.com/file/d/1xOBGa-t2z8fSTU8aveVgiVsILdNVzvaG/view?usp=share_link) to ```data/ESD``` folder.
 
 
 #### For Syn_VCTK
-```sh
-# Syn_VCTK
-# Download large file from drive, can also be done manually
-wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1G3NbgTqZDVc_AXfc5o6BkiNuZQWY6AZy' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1G3NbgTqZDVc_AXfc5o6BkiNuZQWY6AZy" -O syn_vctk.tar.gz && rm -rf /tmp/cookies.txt
+1. Download the preprocessed data from [here](https://drive.google.com/file/d/1xOBGa-t2z8fSTU8aveVgiVsILdNVzvaG/view?usp=share_link) to ```data/Syn_VCTK``` folder.
 
-mkdir data/Syn_VCTK
-tar -xzvf syn_vctk.tar.gz -C data/Syn_VCTK
-rm -rf syn_vctk.tar.gz  # cleanup
-```
+
+## Infer
+bla.
+
+## Train
+bla.
+
