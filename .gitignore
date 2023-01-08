@@ -1,7 +1,21 @@
 # data files
-data/VCTK-corpus/wav16_silence_trimmed_padded/
-data/VCTK-corpus/hubert100/
-data/VCTK-corpus/
+data/VCTK/*
+!data/VCTK/hubert100
+data/VCTK/hubert100/*
+!data/VCTK/hubert100/id_to_spkr.pkl
+!data/VCTK/hubert100/f0_stats.pkl
+
+data/ESD/*
+!data/ESD/hubert100
+data/ESD/hubert100/*
+!data/ESD/hubert100/id_to_spkr.pkl
+!data/ESD/hubert100/f0_stats.pkl
+
+data/Syn_VCTK/*
+!data/Syn_VCTK/hubert100
+data/Syn_VCTK/hubert100/*
+!data/Syn_VCTK/hubert100/id_to_spkr.pkl
+!data/Syn_VCTK/hubert100/f0_stats.pkl
 
 # output files, such as logs and checkpoints
 results/
