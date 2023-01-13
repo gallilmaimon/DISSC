@@ -17,6 +17,12 @@ data/Syn_VCTK/hubert100/*
 !data/Syn_VCTK/hubert100/id_to_spkr.pkl
 !data/Syn_VCTK/hubert100/f0_stats.pkl
 
+data/unseen/*
+!data/unseen/wav_orig
+data/unseen/wav_orig/*
+!data/unseen/wav_orig/s1_1.wav
+!data/unseen/wav_orig/s1_2.wav
+
 # output files, such as logs and checkpoints
 results/
 

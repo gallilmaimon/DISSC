@@ -117,6 +117,35 @@ def infer(input_path: str, device: str = 'cuda:0', args=None) -> None:
                 _infer_sample(seqs, pitch, spk_id, name[0], f'{args.out_path}/{t}_{os.path.basename(input_path)}', len_model, pitch_model, args.norm_pitch)
 
 
+def infer_wild(input_path: str, device: str = 'cuda:0', args=None) -> None:
+    with open(args.id_to_spkr, 'rb') as f:
+        spk_id_dict = {v: k for (k, v) in dict(enumerate(pickle.load(f))).items()}
+
+    with open(args.f0_path, 'rb') as f:
+        f0_param_dict = pickle.load(f)
+    id2pitch_mean, id2pitch_std = prep_stats_tensors(spk_id_dict, f0_param_dict)
+
+    # load models
+    len_model = LenPredictor(n_tokens=args.n_tokens, n_speakers=len(spk_id_dict))
+    len_model.to(device)
+    len_model.eval()
+    len_model.load_state_dict(torch.load(args.len_model + 'best_model.pth'))
+    len_model.norm_mean, len_model.norm_std = torch.load(args.len_model + 'len_norm_stats.pth')
+    pitch_model = PitchPredictor(args.n_tokens, len(spk_id_dict), id2pitch_mean=id2pitch_mean.to(device),
+                                 id2pitch_std=id2pitch_std.to(device))
+    pitch_model.to(device)
+    pitch_model.eval()
+    pitch_model.load_state_dict(torch.load(args.f0_model + 'best_model.pth'))
+
+    for l in open(input_path, 'rb'):
+        name = eval(l)['audio']
+        seq = torch.tensor(eval(l)['units']).view(1, -1).to(device)
+        for t in args.target_speakers:
+            spk_id = torch.tensor(spk_id_dict[t]).view(1, 1).to(device)
+            _infer_sample(seq, None, spk_id, name, f'{args.out_path}/{t}_{os.path.basename(input_path)}', len_model,
+                          pitch_model, args.norm_pitch)
+
+
 def len_carryover_correction(lens):
     vals_ = []
     a = (lens - torch.round(torch.clamp(lens[0], min=1)))[0]
@@ -131,7 +160,6 @@ def len_carryover_correction(lens):
             total_sum += 1
         else:
             vals_.append(0)
-    # print(in_seq.shape[1], lens.sum().item(), (torch.round(torch.clamp(lens[0], min=1)).int() + torch.tensor(vals_).to(lens.device)).sum().item(), torch.round(torch.clamp(lens[0], min=1)).int().sum().item())
     return torch.round(torch.clamp(lens[0], min=1)).int() + torch.tensor(vals_).to(lens.device)
 
 if __name__ == '__main__':
@@ -151,12 +179,18 @@ if __name__ == '__main__':
     parser.add_argument('--norm_pitch', action='store_false', help='If true we output a per-speaker normalised pitch')
     parser.add_argument('--target_speakers', nargs='+', default=None, help='Target speakers for VC. If none random speakers are used')
     parser.add_argument('--sample_df', default=None, help='Path for specific conversions for each sample')
+    parser.add_argument('--wild_sample', action='store_true', help='If we wish to to convert a new sample from an unknown speaker')
+    parser.add_argument('--id_to_spkr', default=None, help='Path of id to spkr pickle dictionary, used for wild samples only')
 
     args = parser.parse_args()
 
     assert args.pred_len | args.pred_pitch, "Inference must at least convert pitch or rhythm (or both)"
+    assert (args.wild_sample & args.pred_len & args.pred_pitch) | (~args.wild_sample), "If we use an unknown speaker we must convert both pitch and rhythm"
 
     seed_everything(args.seed)
     os.makedirs(args.out_path, exist_ok=True)
     os.remove(f'{args.out_path}/{os.path.basename(args.input_path)}') if os.path.exists(f'{args.out_path}/{os.path.basename(args.input_path)}') else ''
-    infer(args.input_path, args.device, args)
+    if args.wild_sample:
+        infer_wild(args.input_path, args.device, args)
+    else:
+        infer(args.input_path, args.device, args)
