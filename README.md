@@ -49,7 +49,32 @@ python3 data/preprocess.py --srcdir data/VCTK/wav_orig --outdir data/VCTK/wav --
 
 
 ## Infer
-This section discusses how to perform speaking style conversion on a given sample with a trained model. We demonstrate this on a single sample from Syn_VCTK, but this can be adapted to any sample.
+This section discusses how to perform speaking style conversion on a given sample with a trained model. We show two different options: converting a sample of an unseen speaker (in the any-to-many) setup with a sample we recorded ourselves, and converting a subset (such as the validation) of a known dataset.
+
+### Any-to-Many
+1. Preprocess the recording, resample to 16khz if needed and pad as needed:
+```sh
+python3 data/preprocess.py --srcdir data/unseen/wav_orig --outdir data/unseen/wav --pad --postfix .wav
+```
+
+2. Encode the sample with HuBERT:
+```sh
+python3 data/encode.py --base_dir data/unseen/wav --out_file data/unseen/hubert100/encoded.txt --device cuda:0
+```
+
+3. Download the pretrained model from [here]() to ```checkpoints/syn_vctk``` and from [here]() to ```sr/checkpoints/vctk_hubert```.
+
+4. Convert the prosody - rhythm (--pred_len option) and pitch contour (--pred_pitch option) using DISSC:
+```sh
+python3 infer.py --input_path data/unseen/hubert100/encoded.txt --out_path data/unseen/pred_hubert/ --pred_len --pred_pitch --len_model checkpoints/syn_vctk_baseline/len/ --pitch_model checkpoints/syn_vctk_baseline/pitch/ --f0_path data/Syn_VCTK/hubert100/f0_stats.pkl --vc --target_speakers p231 p239 p245 p270
+```
+
+5. Resnythesise the audio with speech-resynthesis in the new speaker's voice and style, for here we demonstrate with p231 from Syn_VCTK:
+```sh
+python3 sr/inference.py --input_code_file data/unseen/hubert100/p231_encoded.txt --data_path data/unseen/wav --out_path dissc_p231 --checkpoint_file sr/checkpoints/vctk_hubert --unseen_speaker --id_to_spkr data/Syn_VCTK/hubert100/id_to_spkr.pkl
+```
+
+### Many-to-Many
 0. Download the pretrained model from [here]() to ```results/syn_vctk```.
 
 1. Encode the sample using HuBERT:
