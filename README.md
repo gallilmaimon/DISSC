@@ -113,7 +113,49 @@ bla.
 bla.
 
 ## Train
-This section discusses how to train the models from scratch.
+This section discusses how to train the models from scratch, as in the paper. We encourage you to test out other configurations as well.
+
+### Pitch Predictor
+These models should take around 30 minutes to train on a single GPU.
+- VCTK, this is with the version with no positional encoding to match the paper:
+```sh
+python3 train_f0_predictor.py --out_path checkpoints/vctk --data_path data/VCTK/hubert100/ --f0_path data/VCTK/hubert100/f0_stats.pkl --model_type base --n_epochs 20
+```
+- ESD, this is with the version with no positional encoding to match the paper:
+```sh
+python3 train_f0_predictor.py --out_path checkpoints/esd --data_path data/ESD/hubert100/ --f0_path data/ESD/hubert100/f0_stats.pkl --model_type base --n_epochs 20
+```
+- Syn_VCTK:
+```sh
+python3 train_f0_predictor.py --out_path checkpoints/syn_vctk --data_path data/Syn_VCTK/hubert100/ --f0_path data/Syn_VCTK/hubert100/f0_stats.pkl --model_type new --n_epochs 20
+```
+
+### Rhythm Predictor
+These models should take around 30 minutes to train on a single GPU.
+- VCTK:
+```sh
+python3 train_len_predictor.py --out_path checkpoints/vctk --data_path data/VCTK/hubert100/ --n_epochs 30
+```
+- ESD, this is with the version with no positional encoding to match the paper:
+```sh
+python3 train_f0_predictor.py --out_path checkpoints/esd --data_path data/ESD/hubert100/ --n_epochs 30
+```
+- Syn_VCTK:
+```sh
+python3 train_f0_predictor.py --out_path checkpoints/syn_vctk --data_path data/Syn_VCTK/hubert100/ --n_epochs 30
+```
+
+### Vocder
+Training this model is based on Speech-Resynthesis with minor adjustments. Training it will take a couple of days on 2 GPUs. Update the number of available GPUs in the config files under ```sr/configs```, and in the run command. Also make sure the data paths in the config files match yours.
+- VCTK:
+```sh
+python3 -m torch.distributed.launch --nproc_per_node <NUM_GPUS> sr/train.py --checkpoint_path sr/checkpoints/vctk_hubert --config sr/configs/VCTK/hubert100_lut.json
+```
+- ESD:
+```sh
+python3 -m torch.distributed.launch --nproc_per_node <NUM_GPUS> sr/train.py --checkpoint_path sr/checkpoints/esd_hubert --config sr/configs/ESD/hubert100_lut.json
+```
+- Syn_VCTK uses the same vocoder as VCTK.
 
 ## Reference
 If you found this code useful, we would appreciate you citing the related paper
