@@ -9,6 +9,7 @@ __Abstract__: Voice conversion is the task of making a spoken utterance by one s
 * [Samples](https://pages.cs.huji.ac.il/adiyoss-lab/dissc/)
 * [Setup](#setup)
 * [Inference (with pretrained models)](#infer)
+* [Evaluation (calculate metrics)](#evaluation)
 * [Training](#train)
 
 ## Setup
@@ -25,7 +26,14 @@ git clone https://github.com/gallilmaimon/DISSC.git
 cd DISSC
 
 # install requirements
+conda config --append channels conda-forge  # add needed channels
+conda config --append channels pytorch
+conda config --append channels nvidia
 conda install --file requirements.txt
+
+# install textlesslib, based on https://github.com/facebookresearch/textlesslib#installation
+cd ..
+
 ```
 
 While certain other versions may be compatible as well, this was only tested with this setup.
@@ -49,7 +57,7 @@ python3 data/preprocess.py --srcdir data/VCTK/wav_orig --outdir data/VCTK/wav --
 
 
 ## Infer
-This section discusses how to perform speaking style conversion on a given sample with a trained model. We show two different options: converting a sample of an unseen speaker (in the any-to-many) setup with a sample we recorded ourselves, and converting a subset (such as the validation) of a known dataset.
+This section discusses how to perform speaking style conversion on a given sample with a trained model (in this case syn_vctk). We show the option of converting a sample of an unseen speaker (in the any-to-many) setup with a sample we recorded ourselves. For converting a subset of data from known speakers (such as the validation set), see the [evaluation](#evaluation) section.
 
 ### Any-to-Many
 1. Preprocess the recording, resample to 16khz if needed and pad as needed:
@@ -62,7 +70,7 @@ python3 data/preprocess.py --srcdir data/unseen/wav_orig --outdir data/unseen/wa
 python3 data/encode.py --base_dir data/unseen/wav --out_file data/unseen/hubert100/encoded.txt --device cuda:0
 ```
 
-3. Download the pretrained model from [here]() to ```checkpoints/syn_vctk``` and from [here]() to ```sr/checkpoints/vctk_hubert```.
+3. Download the pretrained models from [here](https://drive.google.com/drive/folders/1oTvW0lxIyrPuEUchfTBSXYpdNMUUXh6n?usp=share_link) to ```checkpoints/syn_vctk``` in the current file structure and all files from [here](https://drive.google.com/drive/folders/1LNP0u35EuBeGmXG5UIjyQnlWS78F2nGm?usp=share_link) to ```sr/checkpoints/vctk_hubert```.
 
 4. Convert the prosody - rhythm (--pred_len option) and pitch contour (--pred_pitch option) using DISSC:
 ```sh
@@ -74,7 +82,10 @@ python3 infer.py --input_path data/unseen/hubert100/encoded.txt --out_path data/
 python3 sr/inference.py --input_code_file data/unseen/hubert100/p231_encoded.txt --data_path data/unseen/wav --out_path dissc_p231 --checkpoint_file sr/checkpoints/vctk_hubert --unseen_speaker --id_to_spkr data/Syn_VCTK/hubert100/id_to_spkr.pkl
 ```
 
-### Many-to-Many
+## Evaluation
+This section discusses how to evaluate the pretrained models on each of the datasets, first performing the VC and then calculating all metrics.
+
+### VCTK
 0. Download the pretrained model from [here]() to ```results/syn_vctk```.
 
 1. Encode the sample using HuBERT:
@@ -92,9 +103,53 @@ python3 infer.py --input_path ... --out_path ... --pred_len --pred_pitch --len_m
 python3 sr/inference.py ...
 ```
 
-## Evaluation
-This section discusses how to evaluate the pretrained models on each of the datasets.
+### ESD
+0. Download the pretrained model from [here]() to ```results/syn_vctk```.
+
+1. Encode the sample using HuBERT:
+```sh
+python3 data/encode.py --base_dir data/sample/wav --out_file data/sample/hubert/encoded.txt --device cuda:0
+```
+
+2. Convert the prosody - rhythm (--pred_len option), pitch contour (--pred_pitch option) or both, using DISSC:
+```sh
+python3 infer.py --input_path ... --out_path ... --pred_len --pred_pitch --len_model results/vctk_baseline/len/ --pitch_model results/vctk_baseline/pitch/ --f0_path data/VCTK/hubert100/f0_stats.pkl --vc --target_speakers p245
+```
+
+3. Resnythesise the audio with speech-resynthesis in the new speaker's voice and style:
+```sh
+python3 sr/inference.py ...
+```
+
+### Syn_VCTK
+0. Download the pretrained model from [here]() to ```results/syn_vctk```.
+
+1. Encode the sample using HuBERT:
+```sh
+python3 data/encode.py --base_dir data/sample/wav --out_file data/sample/hubert/encoded.txt --device cuda:0
+```
+
+2. Convert the prosody - rhythm (--pred_len option), pitch contour (--pred_pitch option) or both, using DISSC:
+```sh
+python3 infer.py --input_path ... --out_path ... --pred_len --pred_pitch --len_model results/vctk_baseline/len/ --pitch_model results/vctk_baseline/pitch/ --f0_path data/VCTK/hubert100/f0_stats.pkl --vc --target_speakers p245
+```
+
+3. Resnythesise the audio with speech-resynthesis in the new speaker's voice and style:
+```sh
+python3 sr/inference.py ...
+```
+
 
 ## Train
-This section discusses how to train the models from scratch/
+This section discusses how to train the models from scratch.
 
+## Reference
+If you found this code useful, we would appreciate you citing the related paper
+```bib
+@article{maimon2022speaking,
+  title={Speaking Style Conversion With Discrete Self-Supervised Units},
+  author={Maimon, Gallil and Adi, Yossi},
+  journal={arXiv preprint arXiv:2212.09730},
+  year={2022}
+}
+```
