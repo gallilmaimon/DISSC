@@ -42,7 +42,7 @@ conda install --file requirements.txt
 While certain other versions may be compatible as well, this was only tested with this setup.
 
 ### Data
-We describe here how to download, preprocess and parse VCTK, Emotional Speech Dataset (ESD) and our synthetic dataset - Syn_VCTK. We assume you are using Linux with default installations for downloading, extracting and deleting files, but this can easily be adapted.
+We describe here how to download, preprocess and parse VCTK, Emotional Speech Dataset (ESD) and our synthetic dataset - Syn_VCTK.
 
 #### For VCTK
 1. Download the data from [here](https://datashare.ed.ac.uk/handle/10283/3443) and extract to ```data/VCTK/wav_orig``` folder. This can be done with:
@@ -77,71 +77,40 @@ python3 data/encode.py --base_dir data/unseen/wav --out_file data/unseen/hubert1
 
 4. Convert the prosody - rhythm (--pred_len option) and pitch contour (--pred_pitch option) using DISSC:
 ```sh
-python3 infer.py --input_path data/unseen/hubert100/encoded.txt --out_path data/unseen/pred_hubert/ --pred_len --pred_pitch --len_model checkpoints/syn_vctk_baseline/len/ --f0_model checkpoints/syn_vctk_baseline/pitch/ --f0_path data/Syn_VCTK/hubert100/f0_stats.pkl --vc --target_speakers p231 p239 p245 p270 --wild_sample --id_to_spkr data/Syn_VCTK/hubert100/id_to_spkr.pkl
+python3 infer.py --input_path data/unseen/hubert100/encoded.txt --out_path data/unseen/pred_hubert/ --pred_len --pred_pitch --len_model checkpoints/syn_vctk/len/ --f0_model checkpoints/syn_vctk/pitch/ --f0_path data/Syn_VCTK/hubert100/f0_stats.pkl --vc --target_speakers p231 p239 p245 p270 --wild_sample --id_to_spkr data/Syn_VCTK/hubert100/id_to_spkr.pkl
 ```
 
-5. Resnythesise the audio with speech-resynthesis in the new speaker's voice and style, for here we demonstrate with p231 from Syn_VCTK:
+5. Resnythesise the audio with speech-resynthesis in the new speakers' voice and style, for here we demonstrate with p231 from Syn_VCTK. Results are saved to ```dissc_p231```:
 ```sh
-python3 sr/inference.py --input_code_file data/unseen/hubert100/p231_encoded.txt --data_path data/unseen/wav --out_path dissc_p231 --checkpoint_file sr/checkpoints/vctk_hubert --unseen_speaker --id_to_spkr data/Syn_VCTK/hubert100/id_to_spkr.pkl
+python3 sr/inference.py --input_code_file data/unseen/hubert100/p231_encoded.txt --data_path data/unseen/wav --output_dir dissc_p231 --checkpoint_file sr/checkpoints/vctk_hubert --unseen_speaker --id_to_spkr data/Syn_VCTK/hubert100/id_to_spkr.pkl
 ```
 
 ## Evaluation
-This section discusses how to evaluate the pretrained models on each of the datasets, first performing the VC and then calculating all metrics.
+This section discusses how to evaluate the pretrained models on each of the datasets, first performing the SSC and then calculating all metrics.
 
 ### VCTK
-0. Download the pretrained model from [here]() to ```results/syn_vctk```.
+1. Download the pretrained DISSC model from [here](https://drive.google.com/drive/folders/1nsT-2d8q_6uLVHXJSjO6GHBFMEE_xWse?usp=share_link) to ```checkpoints/vctk```, and the pretrained vocoder from [here](https://drive.google.com/drive/folders/1LNP0u35EuBeGmXG5UIjyQnlWS78F2nGm?usp=share_link) to ```sr/checkpoints/vctk_hubert``` (if you haven't done so yet.
 
-1. Encode the sample using HuBERT:
+2. Encode the dataset using HuBERT, and perform train-val split:
 ```sh
 python3 data/encode.py --base_dir data/sample/wav --out_file data/sample/hubert/encoded.txt --device cuda:0
 ```
 
-2. Convert the prosody - rhythm (--pred_len option), pitch contour (--pred_pitch option) or both, using DISSC:
+3. Convert the prosody - rhythm (--pred_len option), pitch contour (--pred_pitch option) or both, using DISSC:
 ```sh
-python3 infer.py --input_path ... --out_path ... --pred_len --pred_pitch --len_model results/vctk_baseline/len/ --pitch_model results/vctk_baseline/pitch/ --f0_path data/VCTK/hubert100/f0_stats.pkl --vc --target_speakers p245
+python3 infer.py --input_path data/unseen/hubert100/encoded.txt --out_path data/unseen/pred_hubert/ --pred_len --pred_pitch --len_model checkpoints/vctk/len/ --f0_model checkpoints/vctk/pitch/ --f0_path data/Syn_VCTK/hubert100/f0_stats.pkl --vc --target_speakers p231 p239 p245 p270
 ```
 
-3. Resnythesise the audio with speech-resynthesis in the new speaker's voice and style:
+4. Resnythesise the validation audio with speech-resynthesis in the new speakers' voice and style:
 ```sh
-python3 sr/inference.py ...
+python3 sr/inference.py --input_code_file data/unseen/pred_hubert/p231_encoded.txt --data_path data/unseen/wav/ --output_dir dissc_p231 --checkpoint_file sr/checkpoints/vctk_hubert
 ```
 
 ### ESD
-0. Download the pretrained model from [here]() to ```results/syn_vctk```.
-
-1. Encode the sample using HuBERT:
-```sh
-python3 data/encode.py --base_dir data/sample/wav --out_file data/sample/hubert/encoded.txt --device cuda:0
-```
-
-2. Convert the prosody - rhythm (--pred_len option), pitch contour (--pred_pitch option) or both, using DISSC:
-```sh
-python3 infer.py --input_path ... --out_path ... --pred_len --pred_pitch --len_model results/vctk_baseline/len/ --pitch_model results/vctk_baseline/pitch/ --f0_path data/VCTK/hubert100/f0_stats.pkl --vc --target_speakers p245
-```
-
-3. Resnythesise the audio with speech-resynthesis in the new speaker's voice and style:
-```sh
-python3 sr/inference.py ...
-```
+bla.
 
 ### Syn_VCTK
-0. Download the pretrained model from [here]() to ```results/syn_vctk```.
-
-1. Encode the sample using HuBERT:
-```sh
-python3 data/encode.py --base_dir data/sample/wav --out_file data/sample/hubert/encoded.txt --device cuda:0
-```
-
-2. Convert the prosody - rhythm (--pred_len option), pitch contour (--pred_pitch option) or both, using DISSC:
-```sh
-python3 infer.py --input_path ... --out_path ... --pred_len --pred_pitch --len_model results/vctk_baseline/len/ --pitch_model results/vctk_baseline/pitch/ --f0_path data/VCTK/hubert100/f0_stats.pkl --vc --target_speakers p245
-```
-
-3. Resnythesise the audio with speech-resynthesis in the new speaker's voice and style:
-```sh
-python3 sr/inference.py ...
-```
-
+bla.
 
 ## Train
 This section discusses how to train the models from scratch.
