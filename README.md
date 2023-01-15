@@ -89,21 +89,22 @@ python3 sr/inference.py --input_code_file data/unseen/hubert100/p231_encoded.txt
 This section discusses how to evaluate the pretrained models on each of the datasets, first performing the SSC and then calculating all metrics.
 
 ### VCTK
-1. Download the pretrained DISSC model from [here](https://drive.google.com/drive/folders/1nsT-2d8q_6uLVHXJSjO6GHBFMEE_xWse?usp=share_link) to ```checkpoints/vctk```, and the pretrained vocoder from [here](https://drive.google.com/drive/folders/1LNP0u35EuBeGmXG5UIjyQnlWS78F2nGm?usp=share_link) to ```sr/checkpoints/vctk_hubert``` (if you haven't done so yet.
+1. Download the pretrained DISSC model from [here](https://drive.google.com/drive/folders/1nsT-2d8q_6uLVHXJSjO6GHBFMEE_xWse?usp=share_link) to ```checkpoints/vctk```, and the pretrained vocoder from [here](https://drive.google.com/drive/folders/1LNP0u35EuBeGmXG5UIjyQnlWS78F2nGm?usp=share_link) to ```sr/checkpoints/vctk_hubert``` (if you haven't done so yet).
 
 2. Encode the dataset using HuBERT, and perform train-val split:
 ```sh
-python3 data/encode.py --base_dir data/sample/wav --out_file data/sample/hubert/encoded.txt --device cuda:0
+python3 data/encode.py --base_dir data/VCTK/wav --out_file data/VCTK/hubert100/encoded.txt --device cuda:0
+python3 data/prep_dataset.py --encoded_path data/VCTK/hubert100/encoded.txt --stats_path data/VCTK/hubert100/f0_stats.pkl --split_method paired_val
 ```
 
-3. Convert the prosody - rhythm (--pred_len option), pitch contour (--pred_pitch option) or both, using DISSC:
+3. We give a single script which runs the conversion (predicts prosody + generates with SR), then restructures the file format for evaluation. It then runs MFA to align the text to the audio, as used for metrics and runs all metrics other than speaker verification. For more details, see the script. Results are printed and also saved as a pickle file.
 ```sh
-python3 infer.py --input_path data/unseen/hubert100/encoded.txt --out_path data/unseen/pred_hubert/ --pred_len --pred_pitch --len_model checkpoints/vctk/len/ --f0_model checkpoints/vctk/pitch/ --f0_path data/Syn_VCTK/hubert100/f0_stats.pkl --vc --target_speakers p231 p239 p245 p270
+python3 ...
 ```
 
-4. Resnythesise the validation audio with speech-resynthesis in the new speakers' voice and style:
+4. Evaluate speaker verification. Also here we give a single script which runs the conversion (predicts prosody + generates with SR), then restructures the file format for evaluation. For more details, see the script. Results for EER are printed.
 ```sh
-python3 sr/inference.py --input_code_file data/unseen/pred_hubert/p231_encoded.txt --data_path data/unseen/wav/ --output_dir dissc_p231 --checkpoint_file sr/checkpoints/vctk_hubert
+python3 ...
 ```
 
 ### ESD
