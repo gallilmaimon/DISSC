@@ -36,8 +36,6 @@ pip install git+https://github.com/facebookresearch/fairseq.git@dd106d9534b22e7d
 # install requirements
 cd ../DISSC
 conda config --append channels conda-forge  # add needed channels
-conda config --append channels pytorch
-conda config --append channels nvidia
 conda install --file requirements.txt
 ```
 
@@ -79,7 +77,7 @@ python3 data/encode.py --base_dir data/unseen/wav --out_file data/unseen/hubert1
 
 4. Convert the prosody - rhythm (--pred_len option) and pitch contour (--pred_pitch option) using DISSC:
 ```sh
-python3 infer.py --input_path data/unseen/hubert100/encoded.txt --out_path data/unseen/pred_hubert/ --pred_len --pred_pitch --len_model checkpoints/syn_vctk_baseline/len/ --pitch_model checkpoints/syn_vctk_baseline/pitch/ --f0_path data/Syn_VCTK/hubert100/f0_stats.pkl --vc --target_speakers p231 p239 p245 p270
+python3 infer.py --input_path data/unseen/hubert100/encoded.txt --out_path data/unseen/pred_hubert/ --pred_len --pred_pitch --len_model checkpoints/syn_vctk_baseline/len/ --f0_model checkpoints/syn_vctk_baseline/pitch/ --f0_path data/Syn_VCTK/hubert100/f0_stats.pkl --vc --target_speakers p231 p239 p245 p270 --wild_sample --id_to_spkr data/Syn_VCTK/hubert100/id_to_spkr.pkl
 ```
 
 5. Resnythesise the audio with speech-resynthesis in the new speaker's voice and style, for here we demonstrate with p231 from Syn_VCTK:
