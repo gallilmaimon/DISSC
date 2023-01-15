@@ -16,7 +16,7 @@ from model.len_predictor import LenPredictor
 
 # pitch prediction
 from dataset.pitch_dataset import PitchDataset
-from model.pitch_predictor import PitchPredictor
+from model.pitch_predictor import PitchPredictor, PitchPredictorBase
 
 from utils import seed_everything, morph_seq_len
 
@@ -72,8 +72,13 @@ def infer(input_path: str, device: str = 'cuda:0', args=None) -> None:
         len_model.norm_mean, len_model.norm_std = torch.load(args.len_model + 'len_norm_stats.pth')
 
     if args.pred_pitch:
-        pitch_model = PitchPredictor(args.n_tokens, len(spk_id_dict), id2pitch_mean=id2pitch_mean.to(args.device),
-                                     id2pitch_std=id2pitch_std.to(args.device))
+        if args.f0_model_type == 'base':
+            pitch_model = PitchPredictorBase(args.n_tokens, len(spk_id_dict),
+                                             id2pitch_mean=id2pitch_mean.to(args.device),
+                                             id2pitch_std=id2pitch_std.to(args.device))
+        else:
+            pitch_model = PitchPredictor(args.n_tokens, len(spk_id_dict), id2pitch_mean=id2pitch_mean.to(args.device),
+                                         id2pitch_std=id2pitch_std.to(args.device))
         pitch_model.to(device)
         pitch_model.eval()
         pitch_model.load_state_dict(torch.load(args.f0_model + 'best_model.pth'))
@@ -131,8 +136,12 @@ def infer_wild(input_path: str, device: str = 'cuda:0', args=None) -> None:
     len_model.eval()
     len_model.load_state_dict(torch.load(args.len_model + 'best_model.pth'))
     len_model.norm_mean, len_model.norm_std = torch.load(args.len_model + 'len_norm_stats.pth')
-    pitch_model = PitchPredictor(args.n_tokens, len(spk_id_dict), id2pitch_mean=id2pitch_mean.to(device),
-                                 id2pitch_std=id2pitch_std.to(device))
+    if args.f0_model_type == 'base':
+        pitch_model = PitchPredictorBase(args.n_tokens, len(spk_id_dict), id2pitch_mean=id2pitch_mean.to(args.device),
+                                   id2pitch_std=id2pitch_std.to(args.device))
+    else:
+        pitch_model = PitchPredictor(args.n_tokens, len(spk_id_dict), id2pitch_mean=id2pitch_mean.to(args.device),
+                               id2pitch_std=id2pitch_std.to(args.device))
     pitch_model.to(device)
     pitch_model.eval()
     pitch_model.load_state_dict(torch.load(args.f0_model + 'best_model.pth'))
@@ -171,6 +180,7 @@ if __name__ == '__main__':
     parser.add_argument('--pred_pitch', action='store_true', help='If true we predict the output pitch as well')
     parser.add_argument('--len_model', default='results/vctk_baseline/len/', help='Path of len prediction model')
     parser.add_argument('--f0_model', default='results/vctk_baseline/pitch/', help='Path of pitch prediction model & stats')
+    parser.add_argument('--f0_model_type', default='new', help='type of model from ["base", "new"]. New has PE and few other modifications')
     parser.add_argument('--n_tokens', default=100, type=int, help='number of unique HuBERT tokens to use (which represent how many clusters were used)')
     parser.add_argument('--device', default='cuda:0', help='Device to run on')
     parser.add_argument('--seed', default=42, type=int, help='random seed, use -1 for non-determinism')
