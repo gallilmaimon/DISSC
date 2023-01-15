@@ -3,7 +3,7 @@ Official implementation of ["Speaking Style Conversion With Discrete Self-Superv
 
 ![arxiv](https://img.shields.io/badge/arxiv-2212.09730-darkgreen.svg) ![license](https://img.shields.io/badge/license-MIT-blue.svg) ![python](https://img.shields.io/badge/python-3.8-purple.svg)
 
-**** Put Architecture image here ****
+<img src="docs/DISSC_arch.png" alt="DISSC architecture overview" width="600">
 
 __Abstract__: Voice conversion is the task of making a spoken utterance by one speaker sound as if uttered by a different speaker, while keeping other aspects like content the same. Existing methods focus primarily on spectral features like timbre, but ignore the unique speaking style of people which often impacts prosody. In this study we introduce a method for converting not only the timbre, but also the rhythm and pitch changes to those of the target speaker. In addition, we do so in the many-to-many setting with no paired data. We use pretrained, self-supervised, discrete units which make our approach extremely light-weight. We introduce a suite of quantitative and qualitative evaluation metrics for this setup, and show that our approach outperforms existing methods.
 
