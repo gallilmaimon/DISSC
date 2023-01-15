@@ -113,7 +113,7 @@ def parse_manifest(manifest, base_path):
             if line[0] == '{':
                 sample = eval(line.strip())
                 codes += [torch.LongTensor(sample['units']).numpy()]
-                audio_files += [Path(base_path + sample["audio"].split('/')[-1])]
+                audio_files += [Path(base_path + '/' + sample["audio"].split('/')[-1])]
                 if 'f0' in sample:
                     pitch += [np.array(sample['f0'])]
             else:
