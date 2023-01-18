@@ -111,8 +111,25 @@ python3 ...
 bla.
 
 ### Syn_VCTK
-bla.
+1. Download the pretrained DISSC model from [here](https://drive.google.com/drive/folders/1oTvW0lxIyrPuEUchfTBSXYpdNMUUXh6n?usp=share_link) to ```checkpoints/syn_vctk```, and the pretrained vocoder from [here](https://drive.google.com/drive/folders/1LNP0u35EuBeGmXG5UIjyQnlWS78F2nGm?usp=share_link) to ```sr/checkpoints/vctk_hubert``` (if you haven't done so yet, this is the same as the VCTK vocoder).
 
+2. Encode the dataset using HuBERT, and perform train-val split:
+```sh
+python3 data/encode.py --base_dir data/Syn_VCTK/wav --out_file data/Syn_VCTK/hubert100/encoded.txt --device cuda:0
+python3 data/prep_dataset.py --encoded_path data/Syn_VCTK/hubert100/encoded.txt --stats_path data/Syn_VCTK/hubert100/f0_stats.pkl --split_method paired_val
+```
+
+3. We give a single script which runs the conversion (predicts prosody + generates with SR), then restructures the file format for evaluation. It then runs MFA to align the text to the audio, as used for metrics and runs all metrics other than speaker verification. For more details, see the script. Results are printed and also saved as a pickle file.
+```sh
+python3 scripts/convert_eval.py --dissc_type dissc_b --data syn_vctk --sort_gt  # Convert Rhythm and Pitch
+python3 scripts/convert_eval.py --dissc_type dissc_l --data syn_vctk            # Rhythm only
+python3 scripts/convert_eval.py --dissc_type dissc_p --data syn_vctk            # Pitch only
+```
+
+4. Evaluate speaker verification. Also here we give a single script which runs the conversion (predicts prosody + generates with SR), then restructures the file format for evaluation. For more details, see the script. Results for EER are printed.
+```sh
+python3 ...
+```
 ## Train
 This section discusses how to train the models from scratch, as in the paper. We encourage you to test out other configurations as well.
 
