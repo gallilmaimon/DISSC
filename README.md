@@ -141,7 +141,7 @@ python3 train_len_predictor.py --out_path checkpoints/vctk --data_path data/VCTK
 ```sh
 python3 train_f0_predictor.py --out_path checkpoints/esd --data_path data/ESD/hubert100/ --n_epochs 30
 ```
-- Syn_VCTK:
+- Syn_VCTK. Note that the paper version uses VCTK rhythm predictor for syn_vctk as it is a larger dataset with identical rhythm for the speakers, if you nevertheless wish to train one:
 ```sh
 python3 train_f0_predictor.py --out_path checkpoints/syn_vctk --data_path data/Syn_VCTK/hubert100/ --n_epochs 30
 ```
