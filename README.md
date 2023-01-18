@@ -86,7 +86,7 @@ python3 sr/inference.py --input_code_file data/unseen/hubert100/p231_encoded.txt
 ```
 
 ## Evaluation
-This section discusses how to evaluate the pretrained models on each of the datasets, first performing the SSC and then calculating all metrics. If you wish to manually inspect the different conversions, and alter the models, we suggest you see the ```scripts``` section and run the commands from their manually (or look at the [infer](#infer) section), these scripts are mainly meant as an "all-in-one" to wrap up key results.
+This section discusses how to evaluate the pretrained models on each of the datasets, first performing the SSC and then calculating all metrics. If you wish to manually inspect the different conversions, and alter the models, we suggest you see the ```scripts``` section and run the commands from there manually (or look at the [infer](#infer) section), these scripts are mainly meant as an "all-in-one" to wrap up key results.
 
 ### VCTK
 1. Download the pretrained DISSC model from [here](https://drive.google.com/drive/folders/1nsT-2d8q_6uLVHXJSjO6GHBFMEE_xWse?usp=share_link) to ```checkpoints/vctk```, and the pretrained vocoder from [here](https://drive.google.com/drive/folders/1LNP0u35EuBeGmXG5UIjyQnlWS78F2nGm?usp=share_link) to ```sr/checkpoints/vctk_hubert``` (if you haven't done so yet).
@@ -131,7 +131,7 @@ python3 scripts/convert_eval.py --dissc_type dissc_p --data syn_vctk            
 python3 ...
 ```
 ## Train
-This section discusses how to train the models from scratch, as in the paper. We encourage you to test out other configurations as well.
+This section discusses how to train the models from scratch, as in the paper. We encourage you to test out other configurations as well. This assumes you have downloaded and prepared the datasets (including train-test split) as described in the previous sections.
 
 ### Pitch Predictor
 These models should take around 30 minutes to train on a single GPU.
