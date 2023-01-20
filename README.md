@@ -105,11 +105,12 @@ python3 scripts/convert_eval.py --dissc_type dissc_b --data vctk            # Co
 python3 scripts/convert_eval.py --dissc_type dissc_p --data vctk            # Pitch only - not in original paper
 ```
 
-4. Evaluate speaker verification. Also here we give a single script which runs the conversion (predicts prosody + generates with SR), then restructures the file format for evaluation. For more details, see the script. Results for EER are printed.
+4. Download the speaker verification table, which describes the pairs, from [here](https://drive.google.com/file/d/1b8d5vJQhUixfb7615DIno0T9MisYu4PG/view?usp=share_link) to ```data/VCTK/```.
+
+5. Evaluate speaker verification. Also here we give a single script which runs the conversion (predicts prosody + generates with SR), then restructures the file format for evaluation. For more details, see the script. Results for EER are printed.
 ```sh
-python3 scripts/convert_eval.py --dissc_type dissc_l --data vctk --sort_gt  # Rhythm only
-python3 scripts/convert_eval.py --dissc_type dissc_b --data vctk            # Convert Rhythm and Pitch
-python3 scripts/convert_eval.py --dissc_type dissc_p --data vctk            # Pitch only - not in original paper
+python3 scripts/convert_eval_sv.py --dissc_type dissc_l --data vctk  # Rhythm only
+python3 scripts/convert_eval_sv.py --dissc_type dissc_b --data vctk  # Convert Rhythm and Pitch
 ```
 
 ### ESD
@@ -130,11 +131,12 @@ python3 scripts/convert_eval.py --dissc_type dissc_b --data esd            # Con
 python3 scripts/convert_eval.py --dissc_type dissc_p --data esd            # Pitch only - not in original paper
 ```
 
-4. Evaluate speaker verification. Also here we give a single script which runs the conversion (predicts prosody + generates with SR), then restructures the file format for evaluation. For more details, see the script. Results for EER are printed.
-```sh
-python3 ...
-```
+4. Download the speaker verification table, which describes the pairs, from [here](https://drive.google.com/file/d/1TsLjLz9aU_Mj892v88j8ohRY1lJWV5Vk/view?usp=share_link) to ```data/ESD/```.
 
+5. Evaluate speaker verification. Also here we give a single script which runs the conversion (predicts prosody + generates with SR), then restructures the file format for evaluation. For more details, see the script. Results for EER are printed.
+```sh
+python3 scripts/convert_eval_sv.py --dissc_type dissc_l --data esd  # Rhythm only
+```
 
 ### Syn_VCTK
 1. Download the pretrained DISSC model from [here](https://drive.google.com/drive/folders/1oTvW0lxIyrPuEUchfTBSXYpdNMUUXh6n?usp=share_link) to ```checkpoints/syn_vctk```, and the pretrained vocoder from [here](https://drive.google.com/drive/folders/1LNP0u35EuBeGmXG5UIjyQnlWS78F2nGm?usp=share_link) to ```sr/checkpoints/vctk_hubert``` (if you haven't done so yet, this is the same as the VCTK vocoder).
@@ -152,10 +154,7 @@ python3 scripts/convert_eval.py --dissc_type dissc_l --data syn_vctk            
 python3 scripts/convert_eval.py --dissc_type dissc_p --data syn_vctk            # Pitch only
 ```
 
-4. Evaluate speaker verification. Also here we give a single script which runs the conversion (predicts prosody + generates with SR), then restructures the file format for evaluation. For more details, see the script. Results for EER are printed.
-```sh
-python3 ...
-```
+
 ## Train
 This section discusses how to train the models from scratch, as in the paper. We encourage you to test out other configurations as well. This assumes you have downloaded and prepared the datasets (including train-test split) as described in the previous sections.
 
