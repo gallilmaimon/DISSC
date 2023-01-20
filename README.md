@@ -189,7 +189,7 @@ python3 train_f0_predictor.py --out_path checkpoints/syn_vctk --data_path data/S
 ```
 
 ### Vocder
-Training this model is based on Speech-Resynthesis with minor adjustments. Training it will take a couple of days on 2 GPUs. Update the number of available GPUs in the config files under ```sr/configs```, and in the run command. Also make sure the data paths in the config files match yours.
+Training this model is based on Speech-Resynthesis with minor adjustments. Training it will take a couple of days on 2 GPUs. Update the number of available GPUs in the config files under ```sr/configs```, and in the run command. Also make sure the data paths in the config files match yours. After training, go to the checkpoint path configuration, and change the normalisation to false.
 - VCTK:
 ```sh
 python3 -m torch.distributed.launch --nproc_per_node <NUM_GPUS> sr/train.py --checkpoint_path sr/checkpoints/vctk_hubert --config sr/configs/VCTK/hubert100_lut.json
