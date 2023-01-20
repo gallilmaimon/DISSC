@@ -45,18 +45,18 @@ While certain other versions may be compatible as well, this was only tested wit
 We describe here how to download, preprocess and parse VCTK, Emotional Speech Dataset (ESD) and our synthetic dataset - Syn_VCTK.
 
 #### For VCTK
-1. Download the data from [here](https://datashare.ed.ac.uk/handle/10283/3443) and extract to ```data/VCTK/wav_orig``` folder. This can be done with:
+1. Download the data from [here](https://datashare.ed.ac.uk/handle/10283/3443) and extract the audio to ```data/VCTK/wav_orig``` folder, and the text to ```data/VCTK/txt``` folder.
 2. Preprocess the audio (downsample audio from 48 kHz to 16 kHz and pad). One could also trim silences to potentially improve results, but we do not do so.
 ```sh
 python3 data/preprocess.py --srcdir data/VCTK/wav_orig --outdir data/VCTK/wav --pad --postfix mic2.flac
 ```
 
 #### For ESD
-1. Download the preprocessed data from [here](https://drive.google.com/file/d/1pX-G5geLLHc0852ZD_YlJwNa8_NKspaL/view?usp=share_link) to ```data/ESD/wav``` folder.
+1. Download the preprocessed data from [here](https://drive.google.com/file/d/1pX-G5geLLHc0852ZD_YlJwNa8_NKspaL/view?usp=share_link) to ```data/ESD``` folder.
 2. If you want to preprocess this dataset from scratch, for instance if you wish to select different emotions for each speaker, download the entire dataset from [here](https://drive.google.com/file/d/1scuFwqh8s7KIYAfZW1Eu6088ZAK2SI-v/view).
 
 #### For Syn_VCTK
-1. Download the preprocessed data from [here](https://drive.google.com/file/d/1xOBGa-t2z8fSTU8aveVgiVsILdNVzvaG/view?usp=share_link) to ```data/Syn_VCTK/wav``` folder.
+1. Download the preprocessed data from [here](https://drive.google.com/file/d/1xOBGa-t2z8fSTU8aveVgiVsILdNVzvaG/view?usp=share_link) to ```data/Syn_VCTK``` folder.
 
 
 ## Infer
