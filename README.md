@@ -85,6 +85,7 @@ python3 infer.py --input_path data/unseen/hubert100/encoded.txt --out_path data/
 python3 sr/inference.py --input_code_file data/unseen/hubert100/p231_encoded.txt --data_path data/unseen/wav --output_dir dissc_p231 --checkpoint_file sr/checkpoints/vctk_hubert --unseen_speaker --id_to_spkr data/Syn_VCTK/hubert100/id_to_spkr.pkl
 ```
 
+
 ## Evaluation
 This section discusses how to evaluate the pretrained models on each of the datasets, first performing the SSC and then calculating all metrics. If you wish to manually inspect the different conversions, and alter the models, we suggest you see the ```scripts``` section and run the commands from there manually (or look at the [infer](#infer) section), these scripts are mainly meant as an "all-in-one" to wrap up key results.
 
@@ -99,7 +100,9 @@ python3 data/prep_dataset.py --encoded_path data/VCTK/hubert100/encoded.txt --st
 
 3. We give a single script which runs the conversion (predicts prosody + generates with SR), then restructures the file format for evaluation. It then runs MFA to align the text to the audio, as used for metrics and runs all metrics other than speaker verification. For more details, see the script. Results are printed and also saved as a pickle file.
 ```sh
-python3 ...
+python3 scripts/convert_eval.py --dissc_type dissc_l --data vctk --sort_gt  # Rhythm only
+python3 scripts/convert_eval.py --dissc_type dissc_b --data vctk            # Convert Rhythm and Pitch
+python3 scripts/convert_eval.py --dissc_type dissc_p --data vctk            # Pitch only - not in original paper
 ```
 
 4. Evaluate speaker verification. Also here we give a single script which runs the conversion (predicts prosody + generates with SR), then restructures the file format for evaluation. For more details, see the script. Results for EER are printed.
