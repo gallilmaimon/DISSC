@@ -262,7 +262,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--code_file', default=None)
-    parser.add_argument('--input_code_file', default='../DISC/data/wild/pred_hubert/p239_encoded.txt')
+    parser.add_argument('--input_code_file', default='data/wild/pred_hubert/p239_encoded.txt')
     parser.add_argument('--data_path', default=None, help='Base path for the wavs to override config')
     parser.add_argument('--output_dir', default='debug')
     parser.add_argument('--checkpoint_file', default='checkpoints/vctk_hubert/')

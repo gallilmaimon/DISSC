@@ -116,7 +116,7 @@ def train(data_path: str, device: str = 'cuda:0', args=None) -> None:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--out_path', default='checkpoints/esd_baseline', help='Path to save model and logs')
+    parser.add_argument('--out_path', default='checkpoints/esd', help='Path to save model and logs')
     parser.add_argument('--data_path', default='data/ESD/hubert100', help='Path to sequence data')
     parser.add_argument('--n_tokens', default=100, type=int, help='number of unique HuBERT tokens to use (which represent how many clusters were used)')
     parser.add_argument('--device', default='cuda:0', help='Device to run on')

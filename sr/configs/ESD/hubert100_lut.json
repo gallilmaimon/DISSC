@@ -1,9 +1,9 @@
 {
-    "input_training_file": "../DISC/data/ESD/hubert100/train.txt",
-    "input_validation_file": "../DISC/data/ESD/hubert100/evaluation.txt",
-    "train_base_path": "/cs/dataset/Download/adiyoss/gallil_dset/esd/ESD_filtered_trimmed/train/",
-    "val_base_path": "/cs/dataset/Download/adiyoss/gallil_dset/esd/ESD_filtered_trimmed/evaluation/",
-    "test_base_path": "/cs/dataset/Download/adiyoss/gallil_dset/esd/ESD_filtered_trimmed/paired_test/",
+    "input_training_file": "data/ESD/hubert100/train.txt",
+    "input_validation_file": "data/ESD/hubert100/evaluation.txt",
+    "train_base_path": "data/ESD/wav/train/",
+    "val_base_path": "data/ESD/wav/evaluation/",
+    "test_base_path": "data/ESD/wav/paired_test/",
 
     "resblock": "1",
     "num_gpus": 1,

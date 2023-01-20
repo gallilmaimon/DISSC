@@ -1,9 +1,9 @@
 {
-    "input_training_file": "../DISC/data/VCTK-corpus/hubert100/train.txt",
-    "input_validation_file": "../DISC/data/VCTK-corpus/hubert100/val.txt",
-    "train_base_path": "/cs/dataset/Download/adiyoss/vctk/wav16_trimmed_padded/",
-    "val_base_path": "/cs/dataset/Download/adiyoss/vctk/wav16_trimmed_padded/",
-    "test_base_path": "/cs/dataset/Download/adiyoss/vctk/wav16_trimmed_padded/",
+    "input_training_file": "data/VCTK/hubert100/train.txt",
+    "input_validation_file": "data/VCTK/hubert100/val.txt",
+    "train_base_path": "data/VCTK/wav",
+    "val_base_path": "data/VCTK/wav",
+    "test_base_path": "data/VCTK/wav",
 
     "resblock": "1",
     "num_gpus": 2,
@@ -33,7 +33,7 @@
     "hop_size": 256,
     "win_size": 1024,
 
-    "f0_stats": "../DISC/data/VCTK-corpus/hubert100/f0_stats.pkl",
+    "f0_stats": "/data/VCTK/hubert100/f0_stats.pkl",
     "f0_normalize": true,
     "f0_feats": false,
     "f0_median": false,

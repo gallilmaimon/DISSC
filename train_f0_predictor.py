@@ -109,7 +109,7 @@ def train(data_path: str, f0_path: str, device: str = 'cuda:0', args: argparse =
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--out_path', default='checkpoints/vctk_new', help='Path to save model and logs')
+    parser.add_argument('--out_path', default='checkpoints/vctk', help='Path to save model and logs')
     parser.add_argument('--data_path', default='data/VCTK/hubert100/', help='Path to sequence data')
     parser.add_argument('--n_tokens', default=100, type=int, help='number of unique HuBERT tokens to use (which represent how many clusters were used)')
     parser.add_argument('--f0_path', default='data/VCTK/hubert100/f0_stats.pkl', help='Pitch normalisation stats pickle')
