@@ -3,7 +3,7 @@ import subprocess
 import shutil
 from pathlib import Path
 from scipy.io.wavfile import write
-# import torchaudio
+import torchaudio
 import argparse
 
 
@@ -121,19 +121,19 @@ if __name__ == '__main__':
                 else:
                     print(f'No sample: {spk}_{seq:03}')
 
-    # # Run MFA to get alignment
-    # for t_spk in c['trgt_spk']:
-    #     os.makedirs(f"{c['out_path']}/{t_spk}/txtgrid", exist_ok=True)
-    #     c3 = f"mfa align -s 4 --clean {c['out_path']}/{t_spk}/ english_us_arpa english_us_arpa {c['out_path']}/{t_spk}/txtgrid/"
-    #     _run_bash(c3)
-    #     shutil.rmtree(os.path.expanduser(f"~/Documents/MFA/{t_spk}_pretrained_aligner"))
-    #
-    # if args.sort_gt:
-    #     os.makedirs(f"{gt_path}/txtgrid/", exist_ok=True)
-    #     c3 = f"mfa align -s 4 --clean {gt_path}/ english_us_arpa english_us_arpa {gt_path}/txtgrid/"
-    #     _run_bash(c3)
-    #     shutil.rmtree(os.path.expanduser(f"~/Documents/MFA/orig_pretrained_aligner"))
+    # Run MFA to get alignment
+    for t_spk in c['trgt_spk']:
+        os.makedirs(f"{c['out_path']}/{t_spk}/txtgrid", exist_ok=True)
+        c3 = f"mfa align -s 4 --clean {c['out_path']}/{t_spk}/ english_us_arpa english_us_arpa {c['out_path']}/{t_spk}/txtgrid/"
+        _run_bash(c3)
+        shutil.rmtree(os.path.expanduser(f"~/Documents/MFA/{t_spk}_pretrained_aligner"))
+
+    if args.sort_gt:
+        os.makedirs(f"{gt_path}/txtgrid/", exist_ok=True)
+        c3 = f"mfa align -s 4 --clean {gt_path}/ english_us_arpa english_us_arpa {gt_path}/txtgrid/"
+        _run_bash(c3)
+        shutil.rmtree(os.path.expanduser(f"~/Documents/MFA/orig_pretrained_aligner"))
 
     # Run evaluation
-    # c4 = f"python3 eval.py --base_path results/{args.data} --method {args.dissc_type} --target_speakers {' '.join(c['trgt_spk'])}"
-    # _run_bash(c4)
+    c4 = f"python3 eval.py --base_path results/{args.data} --method {args.dissc_type} --target_speakers {' '.join(c['trgt_spk'])}"
+    _run_bash(c4)

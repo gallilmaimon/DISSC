@@ -55,4 +55,4 @@ if __name__ == '__main__':
 
     eer = EER(torch.tensor(scores[1]), torch.tensor(scores[0]))
 
-    print('\nEER:', eer)
+    print('\nEER:', eer[0])
