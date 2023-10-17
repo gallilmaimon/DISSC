@@ -32,14 +32,20 @@ def get_yaapt(audio):
     pitch = pYAAPT.yaapt(audio, frame_length=frame_length, nccf_thresh1=0.25, frame_space=0.005 * 1000, tda_frame_length=25.0)
     return pitch.samp_values
 
+
 def calc_asr_er(ref, pred):
-    gt_text = ref.strip().translate(str.maketrans('', '', string.punctuation))
+    int_dict = {'0': 'zero', '1': 'one', '2': 'two', '3': 'three', '4': 'four', '5': 'five', '6': 'six', '7': 'seven',
+                '8': 'eight', '9': 'nine'}
+    gt_text = ref.lower().strip().translate(str.maketrans('', '', string.punctuation))
     ref_w = gt_text.split()
-    ref_c = list(gt_text)
-    pred_text = pred.strip().translate(str.maketrans('', '', string.punctuation))
+    ref_c = list(' '.join(ref_w))
+    pred_text = pred.lower().strip().translate(str.maketrans('', '', string.punctuation))
+    for k, v in int_dict.items():
+        pred_text = pred_text.replace(k, v)
     syn_w = pred_text.split()
-    syn_c = list(pred_text)
+    syn_c = list(' '.join(syn_w))
     return ed.eval(syn_c, ref_c), len(ref_c), ed.eval(syn_w, ref_w), len(ref_w)
+
 
 def aligned_ffe(int1, int2, pitch1, pitch2, sr=16000):
     ffe = []
@@ -49,6 +55,7 @@ def aligned_ffe(int1, int2, pitch1, pitch2, sr=16000):
         syn = interp(syn, ref.shape[0])
         ffe.append((np.abs(((ref + 0.0001)/(syn + 0.0001))-1) > 0.2).mean())
     return np.mean(ffe)
+
 
 def calc_errors(asr_model, args):
     gt_path = f'{args.base_path}/orig/'
@@ -122,6 +129,7 @@ def calc_errors(asr_model, args):
                 pass
     return err_dict
 
+
 def log_results(err_dict, args, sr=16000):
     with open(f'{args.base_path}/{args.method}_results.pkl', 'wb') as f:
         pickle.dump(err_dict, f)
@@ -135,6 +143,7 @@ def log_results(err_dict, args, sr=16000):
     print('Char Len Error: ', np.mean(err_dict['p_len']))
     print('Word FFE: ', np.mean(err_dict['w_ffe']))
     print('Character FFE: ', np.mean(err_dict['p_ffe']))
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
