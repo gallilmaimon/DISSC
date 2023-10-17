@@ -1,5 +1,5 @@
 # Speaking Style Conversion With Discrete Self-Supervised Units
-Official implementation of ["Speaking Style Conversion With Discrete Self-Supervised Units"](https://arxiv.org/abs/2212.09730).
+Official implementation of ["Speaking Style Conversion With Discrete Self-Supervised Units"](https://arxiv.org/abs/2212.09730), accepted at EMNLP 2023 (Findings).
 
 ![arxiv](https://img.shields.io/badge/arxiv-2212.09730-darkgreen.svg) ![license](https://img.shields.io/badge/license-MIT-blue.svg) ![python](https://img.shields.io/badge/python-3.8-purple.svg)
 
