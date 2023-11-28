@@ -80,9 +80,9 @@ python3 data/encode.py --base_dir data/unseen/wav --out_file data/unseen/hubert1
 python3 infer.py --input_path data/unseen/hubert100/encoded.txt --out_path data/unseen/pred_hubert/ --pred_len --pred_pitch --len_model checkpoints/syn_vctk/len/ --f0_model checkpoints/syn_vctk/pitch/ --f0_path data/Syn_VCTK/hubert100/f0_stats.pkl --vc --target_speakers p231 p239 p245 p270 --wild_sample --id_to_spkr data/Syn_VCTK/hubert100/id_to_spkr.pkl
 ```
 
-5. Resnythesise the audio with speech-resynthesis in the new speakers' voice and style, for here we demonstrate with p231 from Syn_VCTK. Results are saved to ```dissc_p231```:
+5. Convert the audio with speech-resynthesis in the new speakers' voice and style, for here we demonstrate with p231 from Syn_VCTK. Results are saved to ```dissc_p231```:
 ```sh
-python3 sr/inference.py --input_code_file data/unseen/hubert100/p231_encoded.txt --data_path data/unseen/wav --output_dir dissc_p231 --checkpoint_file sr/checkpoints/vctk_hubert --unseen_speaker --id_to_spkr data/Syn_VCTK/hubert100/id_to_spkr.pkl
+python3 sr/inference.py --input_code_file data/unseen/pred_hubert/p231_encoded.txt --data_path data/unseen/wav --output_dir dissc_p231 --checkpoint_file sr/checkpoints/vctk_hubert --unseen_speaker --id_to_spkr data/Syn_VCTK/hubert100/id_to_spkr.pkl --vc
 ```
 
 
