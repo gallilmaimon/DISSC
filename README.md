@@ -203,10 +203,20 @@ python3 -m torch.distributed.launch --nproc_per_node <NUM_GPUS> sr/train.py --ch
 ## Reference
 If you found this code useful, we would appreciate you citing the related paper
 ```bib
-@article{maimon2022speaking,
-  title={Speaking Style Conversion With Discrete Self-Supervised Units},
-  author={Maimon, Gallil and Adi, Yossi},
-  journal={arXiv preprint arXiv:2212.09730},
-  year={2022}
+@inproceedings{maimon-adi-2023-speaking,
+    title = "Speaking Style Conversion in the Waveform Domain Using Discrete Self-Supervised Units",
+    author = "Maimon, Gallil  and
+      Adi, Yossi",
+    editor = "Bouamor, Houda  and
+      Pino, Juan  and
+      Bali, Kalika",
+    booktitle = "Findings of the Association for Computational Linguistics: EMNLP 2023",
+    month = dec,
+    year = "2023",
+    address = "Singapore",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2023.findings-emnlp.541",
+    pages = "8048--8061",
+    abstract = "We introduce DISSC, a novel, lightweight method that converts the rhythm, pitch contour and timbre of a recording to a target speaker in a textless manner. Unlike DISSC, most voice conversion (VC) methods focus primarily on timbre, and ignore people{'}s unique speaking style (prosody). The proposed approach uses a pretrained, self-supervised model for encoding speech to discrete units, which makes it simple, effective, and fast to train. All conversion modules are only trained on reconstruction like tasks, thus suitable for any-to-many VC with no paired data. We introduce a suite of quantitative and qualitative evaluation metrics for this setup, and empirically demonstrate that DISSC significantly outperforms the evaluated baselines. Code and samples are available at https://pages.cs.huji.ac.il/adiyoss-lab/dissc/.",
 }
 ```
